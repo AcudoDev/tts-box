@@ -1,0 +1,5 @@
+<div class="card error" id="card-{{ preset.id }}">
+  <div class="card-header">{{ preset.label }}</div>
+  <div class="card-body">❌ {{ error_msg }}</div>
+  {% if latency_ms %}<div class="card-footer"><span class="latency">{{ latency_ms }} ms</span></div>{% endif %}
+</div>

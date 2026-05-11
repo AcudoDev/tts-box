@@ -68,3 +68,66 @@ async def generate(
             "selected": chosen,
         },
     )
+
+
+from fastapi import HTTPException
+from fastapi.responses import Response
+
+
+_MIME_TO_EXT = {
+    "audio/mpeg": "mp3",
+    "audio/mp3": "mp3",
+    "audio/wav": "wav",
+    "audio/x-wav": "wav",
+    "audio/ogg": "ogg",
+}
+
+
+def _ext_for(mime: str | None) -> str:
+    return _MIME_TO_EXT.get((mime or "").lower(), "mp3")
+
+
+@app.get("/result/{session_id}/{preset_id}", response_class=HTMLResponse)
+async def result(request: Request, session_id: str, preset_id: str):
+    by_id = {p.id: p for p in PRESETS}
+    preset = by_id.get(preset_id)
+    if not preset:
+        raise HTTPException(404, "unknown preset")
+
+    res = SYNTH.get(session_id, preset_id)
+    if res is None:
+        raise HTTPException(404, "unknown session")
+
+    if res.status == "pending":
+        return templates.TemplateResponse(
+            "card_loading.html",
+            {"request": request, "preset": preset, "session_id": session_id},
+        )
+    if res.status == "error":
+        return templates.TemplateResponse(
+            "card_error.html",
+            {
+                "request": request,
+                "preset": preset,
+                "error_msg": res.error_msg,
+                "latency_ms": res.latency_ms,
+            },
+        )
+    return templates.TemplateResponse(
+        "card_done.html",
+        {
+            "request": request,
+            "preset": preset,
+            "session_id": session_id,
+            "latency_ms": res.latency_ms,
+            "ext": _ext_for(res.mime),
+        },
+    )
+
+
+@app.get("/audio/{session_id}/{preset_id}.{ext}")
+async def audio(session_id: str, preset_id: str, ext: str):
+    res = SYNTH.get(session_id, preset_id)
+    if res is None or res.status != "done" or res.audio is None:
+        raise HTTPException(404, "audio not available")
+    return Response(content=res.audio, media_type=res.mime or "audio/mpeg")
