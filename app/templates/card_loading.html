@@ -1,0 +1,8 @@
+<div class="card loading"
+     id="card-{{ preset.id }}"
+     hx-get="/result/{{ session_id }}/{{ preset.id }}"
+     hx-trigger="load delay:500ms"
+     hx-swap="outerHTML">
+  <div class="card-header">{{ preset.label }}</div>
+  <div class="card-body">⏳ Génération en cours…</div>
+</div>

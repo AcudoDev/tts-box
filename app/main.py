@@ -33,3 +33,38 @@ async def index(request: Request):
         "index.html",
         {"request": request, "presets": PRESETS},
     )
+
+
+from fastapi import Form
+from typing import Annotated
+
+
+@app.post("/generate", response_class=HTMLResponse)
+async def generate(
+    request: Request,
+    text: Annotated[str, Form()],
+    selected: Annotated[list[str], Form()] = [],
+):
+    by_id = {p.id: p for p in PRESETS}
+    chosen = [
+        by_id[pid] for pid in selected
+        if pid in by_id and not by_id[pid].disabled_reason
+    ]
+
+    items = []
+    for preset in chosen:
+        provider = PROVIDERS.get(preset.provider)
+        if not provider:
+            continue
+        items.append((preset.id, provider, preset.model, preset.voice))
+
+    session_id = SYNTH.start_session(text, items)
+
+    return templates.TemplateResponse(
+        "_card_grid.html",
+        {
+            "request": request,
+            "session_id": session_id,
+            "selected": chosen,
+        },
+    )
