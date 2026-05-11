@@ -1,0 +1,45 @@
+# Edit this file to define which TTS combos you want to compare.
+# Each entry shows up as a checkbox on the page.
+
+presets:
+  - id: "el-rachel"
+    label: "ElevenLabs — Rachel (multilingual)"
+    provider: elevenlabs
+    model: eleven_multilingual_v2
+    voice: 21m00Tcm4TlvDq8ikWAM
+    enabled: true
+
+  - id: "el-adam"
+    label: "ElevenLabs — Adam (multilingual)"
+    provider: elevenlabs
+    model: eleven_multilingual_v2
+    voice: pNInz6obpgDQGcFmaJgB
+    enabled: false
+
+  - id: "oa-nova-hd"
+    label: "OpenAI HD — nova"
+    provider: openai
+    model: tts-1-hd
+    voice: nova
+    enabled: true
+
+  - id: "oa-shimmer-hd"
+    label: "OpenAI HD — shimmer"
+    provider: openai
+    model: tts-1-hd
+    voice: shimmer
+    enabled: false
+
+  - id: "oa-onyx-mini"
+    label: "OpenAI 4o-mini-tts — onyx"
+    provider: openai
+    model: gpt-4o-mini-tts
+    voice: onyx
+    enabled: true
+
+  - id: "cartesia-sonic2"
+    label: "Cartesia Sonic-2 — default voice"
+    provider: cartesia
+    model: sonic-2
+    voice: 79a125e8-cd45-4c13-8a67-188112f4dd22
+    enabled: false

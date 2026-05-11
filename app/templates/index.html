@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>TTS Box</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+</head>
+<body>
+  <header><h1>TTS Box</h1></header>
+
+  <main>
+    <form id="gen-form"
+          hx-post="/generate"
+          hx-target="#results"
+          hx-swap="innerHTML">
+      <textarea name="text" required autofocus rows="4"
+                placeholder="Texte à synthétiser…"></textarea>
+
+      <fieldset>
+        <legend>Voix à comparer</legend>
+        {% for p in presets %}
+          <label class="preset {% if p.disabled_reason %}disabled{% endif %}"
+                 {% if p.disabled_reason %}title="{{ p.disabled_reason }}"{% endif %}>
+            <input type="checkbox"
+                   name="selected"
+                   value="{{ p.id }}"
+                   {% if p.enabled and not p.disabled_reason %}checked{% endif %}
+                   {% if p.disabled_reason %}disabled{% endif %} />
+            {{ p.label }}
+            {% if p.disabled_reason %}<span class="hint">({{ p.disabled_reason }})</span>{% endif %}
+          </label>
+        {% endfor %}
+      </fieldset>
+
+      <button type="submit">
+        Générer (<span id="count">0</span> sélectionnés)
+      </button>
+    </form>
+
+    <section id="results"></section>
+  </main>
+
+  <script>
+    const form = document.getElementById("gen-form");
+    const countEl = document.getElementById("count");
+    const updateCount = () => {
+      countEl.textContent = form.querySelectorAll(
+        'input[name="selected"]:checked'
+      ).length;
+    };
+    form.addEventListener("change", updateCount);
+    updateCount();
+
+    document.querySelector("textarea").addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+  </script>
+</body>
+</html>
