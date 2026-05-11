@@ -6,11 +6,12 @@ BASE = "https://api.elevenlabs.io/v1"
 TIMEOUT = httpx.Timeout(30.0)
 
 _MODELS = [
+    "eleven_v3",
     "eleven_multilingual_v2",
     "eleven_turbo_v2_5",
     "eleven_turbo_v2",
-    "eleven_monolingual_v1",
     "eleven_flash_v2_5",
+    "eleven_flash_v2",
 ]
 
 
