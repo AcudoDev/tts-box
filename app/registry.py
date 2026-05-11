@@ -9,7 +9,7 @@ def _discover() -> None:
     """Import every module under app.providers to trigger __init_subclass__."""
     pkg = importlib.import_module("app.providers")
     for mod in pkgutil.iter_modules(pkg.__path__):
-        if mod.name.startswith("_") and not mod.name.startswith("_mistral"):
+        if mod.name.startswith("_"):
             continue
         importlib.import_module(f"app.providers.{mod.name}")
 

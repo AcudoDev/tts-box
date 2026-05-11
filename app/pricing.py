@@ -34,6 +34,9 @@ _PRICE_PER_1K_CHARS: dict[tuple[str, str], float] = {
 
     # --- Murf (Creator plan, ~$0.20/1k chars on subscription) ---
     ("murf", "GEN2"): 0.200,
+
+    # --- Mistral Voxtral TTS (pricing TBC publicly; assumed similar to tts-1) ---
+    ("mistral", "voxtral-mini-tts-2603"): 0.015,
 }
 
 
