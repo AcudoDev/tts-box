@@ -30,8 +30,9 @@ SYNTH = Synthesizer()
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse(
+        request,
         "index.html",
-        {"request": request, "presets": PRESETS},
+        {"presets": PRESETS},
     )
 
 
@@ -61,9 +62,9 @@ async def generate(
     session_id = SYNTH.start_session(text, items)
 
     return templates.TemplateResponse(
+        request,
         "_card_grid.html",
         {
-            "request": request,
             "session_id": session_id,
             "selected": chosen,
         },
@@ -100,23 +101,24 @@ async def result(request: Request, session_id: str, preset_id: str):
 
     if res.status == "pending":
         return templates.TemplateResponse(
+            request,
             "card_loading.html",
-            {"request": request, "preset": preset, "session_id": session_id},
+            {"preset": preset, "session_id": session_id},
         )
     if res.status == "error":
         return templates.TemplateResponse(
+            request,
             "card_error.html",
             {
-                "request": request,
                 "preset": preset,
                 "error_msg": res.error_msg,
                 "latency_ms": res.latency_ms,
             },
         )
     return templates.TemplateResponse(
+        request,
         "card_done.html",
         {
-            "request": request,
             "preset": preset,
             "session_id": session_id,
             "latency_ms": res.latency_ms,
