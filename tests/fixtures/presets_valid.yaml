@@ -1,0 +1,13 @@
+presets:
+  - id: "p1"
+    label: "Preset 1"
+    provider: alpha
+    model: m1
+    voice: v1
+    enabled: true
+  - id: "p2"
+    label: "Preset 2"
+    provider: beta
+    model: m2
+    voice: v2
+    enabled: false
