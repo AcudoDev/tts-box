@@ -1,2 +1,118 @@
-/* Placeholder, real styles in Task 13 */
-body { font-family: system-ui, sans-serif; }
+:root {
+  --bg: #fafafa;
+  --fg: #1a1a1a;
+  --muted: #777;
+  --border: #ddd;
+  --accent: #2563eb;
+  --error: #dc2626;
+  --ok: #059669;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  padding: 1rem 2rem;
+  border-bottom: 1px solid var(--border);
+  background: white;
+}
+header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  resize: vertical;
+}
+
+fieldset {
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+}
+fieldset legend {
+  font-weight: 600;
+  padding: 0 0.5rem;
+}
+
+label.preset {
+  display: block;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
+label.preset.disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+label.preset .hint {
+  color: var(--muted);
+  font-size: 0.85em;
+  margin-left: 0.5rem;
+}
+
+button[type="submit"] {
+  background: var(--accent);
+  color: white;
+  border: 0;
+  padding: 0.6rem 1.25rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+button[type="submit"]:hover { filter: brightness(1.1); }
+
+#results {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.card {
+  width: 320px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.card-header {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.card-body { color: var(--muted); }
+.card.error { border-color: var(--error); }
+.card.error .card-body { color: var(--error); }
+.card.done { border-color: var(--ok); }
+.card audio { width: 100%; }
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.card-footer a { color: var(--accent); text-decoration: none; }
+.card-footer a:hover { text-decoration: underline; }
