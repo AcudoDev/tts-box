@@ -31,6 +31,9 @@ _PRICE_PER_1K_CHARS: dict[tuple[str, str], float] = {
     ("cartesia", "sonic-2"):     0.065,
     ("cartesia", "sonic"):       0.065,
     ("cartesia", "sonic-turbo"): 0.045,
+
+    # --- Murf (Creator plan, ~$0.20/1k chars on subscription) ---
+    ("murf", "GEN2"): 0.200,
 }
 
 
