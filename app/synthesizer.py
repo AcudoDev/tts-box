@@ -1,0 +1,87 @@
+from __future__ import annotations
+import asyncio
+import time
+import uuid
+from dataclasses import dataclass, field
+from typing import Literal
+from app.providers.base import TTSProvider
+
+Status = Literal["pending", "done", "error"]
+
+
+@dataclass
+class Result:
+    status: Status = "pending"
+    audio: bytes | None = None
+    mime: str | None = None
+    latency_ms: int | None = None
+    error_msg: str | None = None
+
+
+@dataclass
+class _Session:
+    results: dict[str, Result] = field(default_factory=dict)
+    tasks: list[asyncio.Task] = field(default_factory=list)
+
+
+class Synthesizer:
+    """In-memory orchestrator. Single active session (mono-user, local)."""
+
+    def __init__(self) -> None:
+        self._sessions: dict[str, _Session] = {}
+
+    def start_session(
+        self,
+        text: str,
+        items: list[tuple[str, TTSProvider, str, str]],
+    ) -> str:
+        # Purge everything else — mono-user, only one session at a time.
+        self._sessions.clear()
+        session_id = uuid.uuid4().hex[:8]
+        session = _Session()
+        self._sessions[session_id] = session
+        for preset_id, provider, model, voice in items:
+            session.results[preset_id] = Result(status="pending")
+            task = asyncio.create_task(
+                self._run(session, preset_id, provider, text, model, voice)
+            )
+            session.tasks.append(task)
+        return session_id
+
+    async def _run(
+        self,
+        session: _Session,
+        preset_id: str,
+        provider: TTSProvider,
+        text: str,
+        model: str,
+        voice: str,
+    ) -> None:
+        start = time.monotonic()
+        try:
+            audio, mime = await provider.synthesize(text, model, voice)
+            session.results[preset_id] = Result(
+                status="done",
+                audio=audio,
+                mime=mime,
+                latency_ms=int((time.monotonic() - start) * 1000),
+            )
+        except Exception as e:
+            session.results[preset_id] = Result(
+                status="error",
+                latency_ms=int((time.monotonic() - start) * 1000),
+                error_msg=f"{type(e).__name__}: {e}",
+            )
+
+    async def wait_all(self, session_id: str) -> None:
+        session = self._sessions.get(session_id)
+        if not session:
+            return
+        if session.tasks:
+            await asyncio.gather(*session.tasks, return_exceptions=True)
+
+    def get(self, session_id: str, preset_id: str) -> Result | None:
+        session = self._sessions.get(session_id)
+        if not session:
+            return None
+        return session.results.get(preset_id)
