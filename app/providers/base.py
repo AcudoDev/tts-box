@@ -37,6 +37,11 @@ class TTSProvider(ABC):
 
     @abstractmethod
     async def synthesize(
-        self, text: str, model: str, voice_id: str
+        self, text: str, model: str, voice_id: str, language: str | None = None
     ) -> tuple[bytes, str]:
-        """Return (audio_bytes, mime_type)."""
+        """Return (audio_bytes, mime_type).
+
+        `language` is an ISO 639-1 code (e.g. "fr", "en"). Providers that
+        accept a language override pass it through; others ignore it.
+        Auto-detection is used when None.
+        """

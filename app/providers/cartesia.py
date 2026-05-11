@@ -39,22 +39,25 @@ class CartesiaProvider(TTSProvider):
         return out
 
     async def synthesize(
-        self, text: str, model: str, voice_id: str
+        self, text: str, model: str, voice_id: str, language: str | None = None
     ) -> tuple[bytes, str]:
+        body: dict = {
+            "model_id": model,
+            "transcript": text,
+            "voice": {"mode": "id", "id": voice_id},
+            "output_format": {
+                "container": "mp3",
+                "sample_rate": 44100,
+                "bit_rate": 128000,
+            },
+        }
+        if language:
+            body["language"] = language
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             r = await client.post(
                 f"{BASE}/tts/bytes",
                 headers=self._headers(),
-                json={
-                    "model_id": model,
-                    "transcript": text,
-                    "voice": {"mode": "id", "id": voice_id},
-                    "output_format": {
-                        "container": "mp3",
-                        "sample_rate": 44100,
-                        "bit_rate": 128000,
-                    },
-                },
+                json=body,
             )
             r.raise_for_status()
             mime = r.headers.get("content-type", "audio/mpeg").split(";")[0]

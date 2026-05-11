@@ -18,7 +18,7 @@ class FakeProvider(TTSProvider):
     def list_models(self): return ["m"]
     async def list_voices(self, model): return []
 
-    async def synthesize(self, text, model, voice_id):
+    async def synthesize(self, text, model, voice_id, language=None):
         if self._delay:
             await asyncio.sleep(self._delay)
         if self._fail:
@@ -30,8 +30,8 @@ async def test_run_session_populates_cache():
     synth = Synthesizer()
     provider = FakeProvider()
     tasks = [
-        ("p1", provider, "m", "v"),
-        ("p2", provider, "m", "v"),
+        ("p1", provider, "m", "v", None),
+        ("p2", provider, "m", "v", None),
     ]
     session_id = synth.start_session("hello", tasks)
     await synth.wait_all(session_id)
@@ -50,7 +50,7 @@ async def test_run_session_error_does_not_crash():
     synth = Synthesizer()
     good = FakeProvider()
     bad = FakeProvider(fail=True)
-    tasks = [("p1", good, "m", "v"), ("p2", bad, "m", "v")]
+    tasks = [("p1", good, "m", "v", None), ("p2", bad, "m", "v", None)]
     session_id = synth.start_session("hi", tasks)
     await synth.wait_all(session_id)
     assert synth.get(session_id, "p1").status == "done"
@@ -61,11 +61,11 @@ async def test_run_session_error_does_not_crash():
 async def test_new_session_purges_old_cache():
     synth = Synthesizer()
     provider = FakeProvider()
-    s1 = synth.start_session("hi", [("p1", provider, "m", "v")])
+    s1 = synth.start_session("hi", [("p1", provider, "m", "v", None)])
     await synth.wait_all(s1)
     assert synth.get(s1, "p1") is not None
 
-    s2 = synth.start_session("bye", [("p1", provider, "m", "v")])
+    s2 = synth.start_session("bye", [("p1", provider, "m", "v", None)])
     assert synth.get(s1, "p1") is None  # purged
 
 

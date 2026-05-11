@@ -11,6 +11,7 @@ class Preset:
     provider: str
     model: str
     voice: str
+    language: str | None = None
     enabled: bool = True
     disabled_reason: str | None = None
 
@@ -31,6 +32,7 @@ def load_presets(path: Path, available_providers: set[str]) -> list[Preset]:
             provider=entry["provider"],
             model=entry["model"],
             voice=entry["voice"],
+            language=entry.get("language"),
             enabled=entry.get("enabled", True),
         )
         if preset.provider not in available_providers:

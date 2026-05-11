@@ -36,17 +36,17 @@ class Synthesizer:
     def start_session(
         self,
         text: str,
-        items: list[tuple[str, TTSProvider, str, str]],
+        items: list[tuple[str, TTSProvider, str, str, str | None]],
     ) -> str:
         # Purge everything else — mono-user, only one session at a time.
         self._sessions.clear()
         session_id = uuid.uuid4().hex[:8]
         session = _Session()
         self._sessions[session_id] = session
-        for preset_id, provider, model, voice in items:
+        for preset_id, provider, model, voice, language in items:
             session.results[preset_id] = Result(status="pending")
             task = asyncio.create_task(
-                self._run(session, preset_id, provider, text, model, voice)
+                self._run(session, preset_id, provider, text, model, voice, language)
             )
             session.tasks.append(task)
         return session_id
@@ -59,10 +59,11 @@ class Synthesizer:
         text: str,
         model: str,
         voice: str,
+        language: str | None,
     ) -> None:
         start = time.monotonic()
         try:
-            audio, mime = await provider.synthesize(text, model, voice)
+            audio, mime = await provider.synthesize(text, model, voice, language)
             char_count = len(text)
             session.results[preset_id] = Result(
                 status="done",

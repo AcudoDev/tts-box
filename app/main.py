@@ -57,7 +57,7 @@ async def generate(
         provider = PROVIDERS.get(preset.provider)
         if not provider:
             continue
-        items.append((preset.id, provider, preset.model, preset.voice))
+        items.append((preset.id, provider, preset.model, preset.voice, preset.language))
 
     session_id = SYNTH.start_session(text, items)
 

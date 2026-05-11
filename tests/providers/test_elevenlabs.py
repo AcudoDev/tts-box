@@ -56,3 +56,23 @@ async def test_list_voices_parses_response(provider):
 def test_list_models_returns_known_models(provider):
     models = provider.list_models()
     assert "eleven_multilingual_v2" in models
+
+
+@respx.mock
+async def test_synthesize_passes_language_code(provider):
+    respx.post("https://api.elevenlabs.io/v1/text-to-speech/v").mock(
+        return_value=httpx.Response(200, content=b"x", headers={"content-type": "audio/mpeg"})
+    )
+    await provider.synthesize("salut", "eleven_v3", "v", language="fr")
+    body = json.loads(respx.calls.last.request.content)
+    assert body["language_code"] == "fr"
+
+
+@respx.mock
+async def test_synthesize_omits_language_when_none(provider):
+    respx.post("https://api.elevenlabs.io/v1/text-to-speech/v").mock(
+        return_value=httpx.Response(200, content=b"x", headers={"content-type": "audio/mpeg"})
+    )
+    await provider.synthesize("hi", "eleven_v3", "v")
+    body = json.loads(respx.calls.last.request.content)
+    assert "language_code" not in body

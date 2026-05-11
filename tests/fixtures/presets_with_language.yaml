@@ -1,0 +1,12 @@
+presets:
+  - id: "with-lang"
+    label: "Has language"
+    provider: alpha
+    model: m
+    voice: v
+    language: fr
+  - id: "without-lang"
+    label: "No language"
+    provider: alpha
+    model: m
+    voice: v

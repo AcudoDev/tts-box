@@ -29,3 +29,16 @@ def test_preset_default_enabled_true():
     p = Preset(id="x", label="X", provider="alpha", model="m", voice="v")
     assert p.enabled is True
     assert p.disabled_reason is None
+
+
+def test_preset_default_language_none():
+    p = Preset(id="x", label="X", provider="alpha", model="m", voice="v")
+    assert p.language is None
+
+
+def test_load_parses_optional_language():
+    presets = load_presets(FIX / "presets_with_language.yaml", available_providers={"alpha"})
+    with_lang = next(p for p in presets if p.id == "with-lang")
+    without_lang = next(p for p in presets if p.id == "without-lang")
+    assert with_lang.language == "fr"
+    assert without_lang.language is None

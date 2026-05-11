@@ -42,8 +42,11 @@ class ElevenLabsProvider(TTSProvider):
         return out
 
     async def synthesize(
-        self, text: str, model: str, voice_id: str
+        self, text: str, model: str, voice_id: str, language: str | None = None
     ) -> tuple[bytes, str]:
+        body: dict = {"text": text, "model_id": model}
+        if language:
+            body["language_code"] = language
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             r = await client.post(
                 f"{BASE}/text-to-speech/{voice_id}",
@@ -51,7 +54,7 @@ class ElevenLabsProvider(TTSProvider):
                     "xi-api-key": self.api_key,
                     "accept": "audio/mpeg",
                 },
-                json={"text": text, "model_id": model},
+                json=body,
             )
             r.raise_for_status()
             mime = r.headers.get("content-type", "audio/mpeg").split(";")[0]

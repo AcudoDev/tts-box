@@ -33,6 +33,26 @@ def test_list_models(provider):
 
 
 @respx.mock
+async def test_synthesize_passes_language(provider):
+    respx.post("https://api.cartesia.ai/tts/bytes").mock(
+        return_value=httpx.Response(200, content=b"x", headers={"content-type": "audio/mpeg"})
+    )
+    await provider.synthesize("salut", "sonic-2", "v", language="fr")
+    body = json.loads(respx.calls.last.request.content)
+    assert body["language"] == "fr"
+
+
+@respx.mock
+async def test_synthesize_omits_language_when_none(provider):
+    respx.post("https://api.cartesia.ai/tts/bytes").mock(
+        return_value=httpx.Response(200, content=b"x", headers={"content-type": "audio/mpeg"})
+    )
+    await provider.synthesize("hi", "sonic-2", "v")
+    body = json.loads(respx.calls.last.request.content)
+    assert "language" not in body
+
+
+@respx.mock
 async def test_list_voices_parses(provider):
     respx.get("https://api.cartesia.ai/voices").mock(return_value=httpx.Response(
         200,

@@ -24,8 +24,9 @@ class OpenAIProvider(TTSProvider):
         return [Voice(id=v, name=v) for v in _VOICES]
 
     async def synthesize(
-        self, text: str, model: str, voice_id: str
+        self, text: str, model: str, voice_id: str, language: str | None = None
     ) -> tuple[bytes, str]:
+        # OpenAI /v1/audio/speech has no language parameter; auto-detected.
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             r = await client.post(
                 URL,

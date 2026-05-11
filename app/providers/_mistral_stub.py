@@ -19,5 +19,5 @@ class MistralStubProvider(TTSProvider):
     async def list_voices(self, model: str) -> list[Voice]:
         return []
 
-    async def synthesize(self, text: str, model: str, voice_id: str):
+    async def synthesize(self, text: str, model: str, voice_id: str, language: str | None = None):
         raise NotImplementedError("Mistral TTS API is not publicly available yet.")
