@@ -116,3 +116,5 @@ button[type="submit"]:hover { filter: brightness(1.1); }
 }
 .card-footer a { color: var(--accent); text-decoration: none; }
 .card-footer a:hover { text-decoration: underline; }
+.card-footer .cost { font-variant-numeric: tabular-nums; }
+.card-footer .cost.muted { color: var(--muted); }

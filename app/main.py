@@ -123,6 +123,8 @@ async def result(request: Request, session_id: str, preset_id: str):
             "session_id": session_id,
             "latency_ms": res.latency_ms,
             "ext": _ext_for(res.mime),
+            "char_count": res.char_count,
+            "cost_usd": res.cost_usd,
         },
     )
 

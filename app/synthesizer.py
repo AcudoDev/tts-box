@@ -5,6 +5,7 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Literal
 from app.providers.base import TTSProvider
+from app.pricing import estimate_cost_usd
 
 Status = Literal["pending", "done", "error"]
 
@@ -16,6 +17,8 @@ class Result:
     mime: str | None = None
     latency_ms: int | None = None
     error_msg: str | None = None
+    char_count: int | None = None
+    cost_usd: float | None = None
 
 
 @dataclass
@@ -60,11 +63,14 @@ class Synthesizer:
         start = time.monotonic()
         try:
             audio, mime = await provider.synthesize(text, model, voice)
+            char_count = len(text)
             session.results[preset_id] = Result(
                 status="done",
                 audio=audio,
                 mime=mime,
                 latency_ms=int((time.monotonic() - start) * 1000),
+                char_count=char_count,
+                cost_usd=estimate_cost_usd(provider.name, model, char_count),
             )
         except Exception as e:
             session.results[preset_id] = Result(

@@ -41,6 +41,9 @@ async def test_run_session_populates_cache():
     assert r1.audio == b"AUDIO"
     assert r1.mime == "audio/mpeg"
     assert r1.latency_ms is not None and r1.latency_ms >= 0
+    assert r1.char_count == len("hello")
+    # Unknown provider → cost_usd is None.
+    assert r1.cost_usd is None
 
 
 async def test_run_session_error_does_not_crash():
