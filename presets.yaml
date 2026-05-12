@@ -95,3 +95,27 @@ presets:
     voice: e0580ce5-e63c-4cbe-88c8-a983b80c5f1f
     language: fr
     enabled: false
+
+  - id: "azure-henri"
+    label: "Azure Neural — Henri (fr, homme)"
+    provider: azure
+    model: neural
+    voice: fr-FR-HenriNeural
+    language: fr-FR
+    enabled: true
+
+  - id: "azure-denise"
+    label: "Azure Neural — Denise (fr, femme)"
+    provider: azure
+    model: neural
+    voice: fr-FR-DeniseNeural
+    language: fr-FR
+    enabled: true
+
+  - id: "azure-vivienne-hd"
+    label: "Azure Neural HD — Vivienne Dragon (fr, expressive)"
+    provider: azure
+    model: neural
+    voice: fr-FR-Vivienne:DragonHDLatestNeural
+    language: fr-FR
+    enabled: false

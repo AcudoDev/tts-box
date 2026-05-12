@@ -37,6 +37,9 @@ _PRICE_PER_1K_CHARS: dict[tuple[str, str], float] = {
 
     # --- Mistral Voxtral TTS (pricing TBC publicly; assumed similar to tts-1) ---
     ("mistral", "voxtral-mini-tts-2603"): 0.015,
+
+    # --- Azure Speech (Neural Standard $16/1M chars on S0; F0 tier = 0.5M chars free/month) ---
+    ("azure", "neural"): 0.016,
 }
 
 
