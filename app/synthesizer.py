@@ -1,11 +1,42 @@
 from __future__ import annotations
 import asyncio
+import json
 import time
 import uuid
 from dataclasses import dataclass, field
 from typing import Literal
+import httpx
 from app.providers.base import TTSProvider
 from app.pricing import estimate_cost_usd
+
+
+def _format_error(e: Exception) -> str:
+    """Produce a human-readable one-line error message.
+
+    For HTTP errors, try to extract a meaningful field from the JSON body
+    (ElevenLabs uses detail.message, OpenAI/Mistral use error.message, etc.).
+    """
+    if isinstance(e, httpx.HTTPStatusError):
+        code = e.response.status_code
+        try:
+            payload = e.response.json()
+        except (json.JSONDecodeError, ValueError):
+            return f"HTTP {code}: {e.response.text[:120]}".strip()
+        msg = (
+            (payload.get("detail") or {}).get("message")
+            if isinstance(payload.get("detail"), dict)
+            else None
+        )
+        if not msg:
+            msg = payload.get("detail") if isinstance(payload.get("detail"), str) else None
+        if not msg and isinstance(payload.get("error"), dict):
+            msg = payload["error"].get("message")
+        if not msg:
+            msg = payload.get("message")
+        if not msg:
+            msg = str(payload)[:200]
+        return f"HTTP {code}: {msg}"
+    return f"{type(e).__name__}: {e}"
 
 Status = Literal["pending", "done", "error"]
 
@@ -77,7 +108,7 @@ class Synthesizer:
             session.results[preset_id] = Result(
                 status="error",
                 latency_ms=int((time.monotonic() - start) * 1000),
-                error_msg=f"{type(e).__name__}: {e}",
+                error_msg=_format_error(e),
             )
 
     async def wait_all(self, session_id: str) -> None:
