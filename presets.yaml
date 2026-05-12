@@ -176,6 +176,102 @@ presets:
     language: fr-FR
     enabled: true
 
+  - id: "azure-alain"
+    label: "Alain (homme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-AlainNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-brigitte"
+    label: "Brigitte (femme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-BrigitteNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-celeste"
+    label: "Céleste (femme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-CelesteNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-claude"
+    label: "Claude (homme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-ClaudeNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-coralie"
+    label: "Coralie (femme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-CoralieNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-eloise"
+    label: "Éloïse (femme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-EloiseNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-jacqueline"
+    label: "Jacqueline (femme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-JacquelineNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-jerome"
+    label: "Jérôme (homme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-JeromeNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-josephine"
+    label: "Joséphine (femme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-JosephineNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-maurice"
+    label: "Maurice (homme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-MauriceNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-yves"
+    label: "Yves (homme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-YvesNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-yvette"
+    label: "Yvette (femme)"
+    provider: azure
+    model: neural-standard
+    voice: fr-FR-YvetteNeural
+    language: fr-FR
+    enabled: false
+
   - id: "azure-vivienne-hd"
     label: "Vivienne Dragon (femme, expressive)"
     provider: azure
