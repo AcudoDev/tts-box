@@ -118,4 +118,36 @@ presets:
     model: neural
     voice: fr-FR-Vivienne:DragonHDLatestNeural
     language: fr-FR
+    enabled: true
+
+  - id: "azure-remy-hd"
+    label: "Azure Neural HD — Remy Dragon (fr, expressive)"
+    provider: azure
+    model: neural
+    voice: fr-FR-Remy:DragonHDLatestNeural
+    language: fr-FR
+    enabled: true
+
+  - id: "azure-vivienne-multi"
+    label: "Azure Multilingual — Vivienne (fr)"
+    provider: azure
+    model: neural
+    voice: fr-FR-VivienneMultilingualNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-remy-multi"
+    label: "Azure Multilingual — Remy (fr)"
+    provider: azure
+    model: neural
+    voice: fr-FR-RemyMultilingualNeural
+    language: fr-FR
+    enabled: false
+
+  - id: "azure-lucien-multi"
+    label: "Azure Multilingual — Lucien (fr)"
+    provider: azure
+    model: neural
+    voice: fr-FR-LucienMultilingualNeural
+    language: fr-FR
     enabled: false
