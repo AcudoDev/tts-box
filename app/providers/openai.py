@@ -5,7 +5,7 @@ from app.providers.base import TTSProvider, Voice
 URL = "https://api.openai.com/v1/audio/speech"
 TIMEOUT = httpx.Timeout(30.0)
 
-_MODELS = ["tts-1", "tts-1-hd", "gpt-4o-mini-tts"]
+_MODELS = ["tts-1", "tts-1-hd"]
 
 _VOICES = [
     "alloy", "ash", "ballad", "coral", "echo",

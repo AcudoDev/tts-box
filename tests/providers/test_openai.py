@@ -31,7 +31,8 @@ def test_list_models(provider):
     models = provider.list_models()
     assert "tts-1" in models
     assert "tts-1-hd" in models
-    assert "gpt-4o-mini-tts" in models
+    # gpt-4o-mini-tts is reached via OpenRouter instead.
+    assert "gpt-4o-mini-tts" not in models
 
 
 async def test_list_voices_returns_static(provider):

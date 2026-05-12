@@ -14,10 +14,9 @@ from __future__ import annotations
 
 # USD per 1000 characters of input text.
 _PRICE_PER_1K_CHARS: dict[tuple[str, str], float] = {
-    # --- OpenAI ---
+    # --- OpenAI (gpt-4o-mini-tts is routed through OpenRouter instead) ---
     ("openai", "tts-1"):           0.015,   # $15/1M chars
     ("openai", "tts-1-hd"):        0.030,   # $30/1M chars
-    ("openai", "gpt-4o-mini-tts"): 0.015,   # approximate (audio-token billing)
 
     # --- ElevenLabs (Creator plan, ~$0.00022/credit) ---
     ("elevenlabs", "eleven_v3"):              0.220,  # 1 credit/char
@@ -35,14 +34,15 @@ _PRICE_PER_1K_CHARS: dict[tuple[str, str], float] = {
     # --- Murf (Creator plan, ~$0.20/1k chars on subscription) ---
     ("murf", "GEN2"): 0.200,
 
-    # --- Mistral Voxtral TTS (pricing TBC publicly; assumed similar to tts-1) ---
-    ("mistral", "voxtral-mini-tts-2603"): 0.015,
+    # --- Mistral Voxtral TTS is now reached via OpenRouter (see below). ---
 
     # --- Azure Speech (Neural Standard $16/1M chars on S0; F0 tier = 0.5M chars free/month) ---
     ("azure", "neural"): 0.016,
 
     # --- OpenRouter (per-token pricing converted to per-1k chars ~ 250 tokens/1k chars) ---
     ("openrouter", "google/gemini-3.1-flash-tts-preview"): 0.00025,
+    ("openrouter", "openai/gpt-4o-mini-tts-2025-12-15"):   0.00015,
+    ("openrouter", "mistralai/voxtral-mini-tts-2603"):     0.004,
     ("openrouter", "sesame/csm-1b"):                        0.00175,
     ("openrouter", "hexgrad/kokoro-82m"):                   0.000155,
     ("openrouter", "canopylabs/orpheus-3b-0.1-ft"):         0.00175,

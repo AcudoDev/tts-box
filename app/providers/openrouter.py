@@ -11,6 +11,8 @@ TIMEOUT = httpx.Timeout(60.0)
 # covered by our direct provider integrations (openai/mistral are duplicates).
 _MODELS = [
     "google/gemini-3.1-flash-tts-preview",
+    "openai/gpt-4o-mini-tts-2025-12-15",
+    "mistralai/voxtral-mini-tts-2603",
     "sesame/csm-1b",
     "hexgrad/kokoro-82m",
     "canopylabs/orpheus-3b-0.1-ft",

@@ -40,10 +40,10 @@ presets:
     language: fr
     enabled: false
 
-  - id: "oa-onyx-mini"
-    label: "OpenAI 4o-mini-tts — onyx"
-    provider: openai
-    model: gpt-4o-mini-tts
+  - id: "or-openai-mini-onyx"
+    label: "OpenAI 4o-mini-tts — onyx (via OpenRouter)"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
     voice: onyx
     language: fr
     enabled: true
@@ -72,26 +72,26 @@ presets:
     language: fr
     enabled: false
 
-  - id: "mistral-marie-neutral"
-    label: "Mistral Voxtral — Marie (neutral, fr)"
-    provider: mistral
-    model: voxtral-mini-tts-2603
+  - id: "or-mistral-marie-neutral"
+    label: "Mistral Voxtral — Marie (neutral, fr) via OpenRouter"
+    provider: openrouter
+    model: mistralai/voxtral-mini-tts-2603
     voice: 5a271406-039d-46fe-835b-fbbb00eaf08d
     language: fr
     enabled: true
 
-  - id: "mistral-marie-happy"
-    label: "Mistral Voxtral — Marie (happy, fr)"
-    provider: mistral
-    model: voxtral-mini-tts-2603
+  - id: "or-mistral-marie-happy"
+    label: "Mistral Voxtral — Marie (happy, fr) via OpenRouter"
+    provider: openrouter
+    model: mistralai/voxtral-mini-tts-2603
     voice: 49d024dd-981b-4462-bb17-74d381eb8fd7
     language: fr
     enabled: false
 
-  - id: "mistral-marie-curious"
-    label: "Mistral Voxtral — Marie (curious, fr)"
-    provider: mistral
-    model: voxtral-mini-tts-2603
+  - id: "or-mistral-marie-curious"
+    label: "Mistral Voxtral — Marie (curious, fr) via OpenRouter"
+    provider: openrouter
+    model: mistralai/voxtral-mini-tts-2603
     voice: e0580ce5-e63c-4cbe-88c8-a983b80c5f1f
     language: fr
     enabled: false
