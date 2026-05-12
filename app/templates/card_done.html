@@ -1,5 +1,8 @@
 <div class="card done" id="card-{{ preset.id }}">
-  <div class="card-header">{{ preset.label }}</div>
+  <div class="card-header">
+    <span class="card-voice">{{ preset.label }}</span>
+    <span class="card-meta">{{ preset.provider }} · {{ preset.model }}</span>
+  </div>
   <audio src="/audio/{{ session_id }}/{{ preset.id }}.{{ ext }}" controls preload="auto"></audio>
   <div class="card-footer">
     <span class="latency">{{ latency_ms }} ms</span>

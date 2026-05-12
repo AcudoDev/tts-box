@@ -310,9 +310,20 @@ label.preset input[type="checkbox"]:disabled {
   to   { opacity: 1; transform: translateY(0); }
 }
 .card-header {
-  font-weight: 600;
-  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
   line-height: 1.3;
+}
+.card-voice {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.card-meta {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.01em;
 }
 .card-body { color: var(--muted); font-size: 0.9rem; }
 .card audio { width: 100%; }

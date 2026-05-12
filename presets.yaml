@@ -72,6 +72,22 @@ presets:
     language: fr
     enabled: false
 
+  - id: "oa-nova-tts-1"
+    label: "nova"
+    provider: openai
+    model: tts-1
+    voice: nova
+    language: fr
+    enabled: true
+
+  - id: "oa-shimmer-tts-1"
+    label: "shimmer"
+    provider: openai
+    model: tts-1
+    voice: shimmer
+    language: fr
+    enabled: false
+
   - id: "oa-nova-hd"
     label: "nova"
     provider: openai
