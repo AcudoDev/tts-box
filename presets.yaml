@@ -151,3 +151,35 @@ presets:
     voice: fr-FR-LucienMultilingualNeural
     language: fr-FR
     enabled: false
+
+  - id: "or-gemini-kore"
+    label: "OpenRouter — Gemini Flash TTS / Kore (fr)"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Kore
+    language: fr
+    enabled: true
+
+  - id: "or-gemini-charon"
+    label: "OpenRouter — Gemini Flash TTS / Charon (fr)"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Charon
+    language: fr
+    enabled: false
+
+  - id: "or-sesame"
+    label: "OpenRouter — Sesame CSM-1b (Maya, EN)"
+    provider: openrouter
+    model: sesame/csm-1b
+    voice: nova
+    language: fr
+    enabled: false
+
+  - id: "or-kokoro"
+    label: "OpenRouter — Kokoro 82m / af_heart"
+    provider: openrouter
+    model: hexgrad/kokoro-82m
+    voice: af_heart
+    language: fr
+    enabled: false

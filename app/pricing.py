@@ -40,6 +40,14 @@ _PRICE_PER_1K_CHARS: dict[tuple[str, str], float] = {
 
     # --- Azure Speech (Neural Standard $16/1M chars on S0; F0 tier = 0.5M chars free/month) ---
     ("azure", "neural"): 0.016,
+
+    # --- OpenRouter (per-token pricing converted to per-1k chars ~ 250 tokens/1k chars) ---
+    ("openrouter", "google/gemini-3.1-flash-tts-preview"): 0.00025,
+    ("openrouter", "sesame/csm-1b"):                        0.00175,
+    ("openrouter", "hexgrad/kokoro-82m"):                   0.000155,
+    ("openrouter", "canopylabs/orpheus-3b-0.1-ft"):         0.00175,
+    ("openrouter", "zyphra/zonos-v0.1-transformer"):        0.00175,
+    ("openrouter", "zyphra/zonos-v0.1-hybrid"):             0.00175,
 }
 
 

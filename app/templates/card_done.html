@@ -4,7 +4,11 @@
   <div class="card-footer">
     <span class="latency">{{ latency_ms }} ms</span>
     {% if cost_usd is not none %}
-      <span class="cost" title="{{ char_count }} chars · estimation">${{ "%.4f"|format(cost_usd) }}</span>
+      {% if cost_usd > 0 and cost_usd < 0.0001 %}
+        <span class="cost" title="{{ char_count }} chars · estimation">&lt;$0.0001</span>
+      {% else %}
+        <span class="cost" title="{{ char_count }} chars · estimation">${{ "%.4f"|format(cost_usd) }}</span>
+      {% endif %}
     {% else %}
       <span class="cost muted" title="Tarif inconnu pour ce modèle">— $</span>
     {% endif %}
