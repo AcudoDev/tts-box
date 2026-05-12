@@ -16,6 +16,14 @@ presets:
     language: fr
     enabled: true
 
+  - id: "el-adam-v3"
+    label: "Adam"
+    provider: elevenlabs
+    model: eleven_v3
+    voice: pNInz6obpgDQGcFmaJgB
+    language: fr
+    enabled: false
+
   - id: "el-rachel-multi-v2"
     label: "Rachel"
     provider: elevenlabs
@@ -40,11 +48,27 @@ presets:
     language: fr
     enabled: false
 
+  - id: "el-adam-turbo-v2-5"
+    label: "Adam"
+    provider: elevenlabs
+    model: eleven_turbo_v2_5
+    voice: pNInz6obpgDQGcFmaJgB
+    language: fr
+    enabled: false
+
   - id: "el-rachel-flash-v2-5"
     label: "Rachel"
     provider: elevenlabs
     model: eleven_flash_v2_5
     voice: 21m00Tcm4TlvDq8ikWAM
+    language: fr
+    enabled: false
+
+  - id: "el-adam-flash-v2-5"
+    label: "Adam"
+    provider: elevenlabs
+    model: eleven_flash_v2_5
+    voice: pNInz6obpgDQGcFmaJgB
     language: fr
     enabled: false
 
