@@ -6,10 +6,10 @@ from app.providers.base import TTSProvider, Voice
 
 TIMEOUT = httpx.Timeout(30.0)
 
-# Azure has a single "model family" per voice — the model is encoded in the voice
-# name itself (XxxNeural, XxxMultilingualNeural, Xxx:DragonHDLatestNeural).
-# We expose a single placeholder model to keep the registry interface uniform.
-_MODELS = ["neural"]
+# Azure encodes the actual model in the voice name (XxxNeural, XxxMultilingualNeural,
+# Xxx:DragonHDLatestNeural). The `model` field here is a logical grouping used
+# for UI organization + pricing — it's never sent to the API.
+_MODELS = ["neural-standard", "neural-hd", "neural-multilingual"]
 
 
 def _endpoint(region: str) -> str:

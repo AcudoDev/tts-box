@@ -37,20 +37,42 @@ _PROVIDER_DISPLAY = {
 }
 
 
-def _group_presets_by_provider(presets):
-    groups: dict[str, list] = {}
+def _group_presets_by_provider_and_model(presets):
+    """Two-level grouping: provider → model → list of presets.
+
+    Returns list[ (provider_name, list[ (model_name, list[Preset]) ]) ] preserving
+    the order in which providers/models first appear in `presets`.
+    """
+    # provider -> model -> [presets]
+    by_provider: dict[str, dict[str, list]] = {}
+    provider_order: list[str] = []
+    model_order: dict[str, list[str]] = {}
     for p in presets:
-        groups.setdefault(p.provider, []).append(p)
-    ordered = []
+        if p.provider not in by_provider:
+            by_provider[p.provider] = {}
+            provider_order.append(p.provider)
+            model_order[p.provider] = []
+        if p.model not in by_provider[p.provider]:
+            by_provider[p.provider][p.model] = []
+            model_order[p.provider].append(p.model)
+        by_provider[p.provider][p.model].append(p)
+
+    # Prefer the canonical provider order, then fall back to insertion order.
+    ordered_providers = []
     seen = set()
     for provider in _PROVIDER_DISPLAY:
-        if provider in groups:
-            ordered.append((provider, groups[provider]))
+        if provider in by_provider:
+            ordered_providers.append(provider)
             seen.add(provider)
-    for provider, items in groups.items():
+    for provider in provider_order:
         if provider not in seen:
-            ordered.append((provider, items))
-    return ordered
+            ordered_providers.append(provider)
+
+    out = []
+    for provider in ordered_providers:
+        models = [(m, by_provider[provider][m]) for m in model_order[provider]]
+        out.append((provider, models))
+    return out
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -59,7 +81,7 @@ async def index(request: Request):
         request,
         "index.html",
         {
-            "groups": _group_presets_by_provider(PRESETS),
+            "groups": _group_presets_by_provider_and_model(PRESETS),
             "provider_display": _PROVIDER_DISPLAY,
         },
     )

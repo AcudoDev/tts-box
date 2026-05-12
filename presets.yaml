@@ -9,7 +9,7 @@
 
 presets:
   - id: "el-rachel"
-    label: "ElevenLabs — Rachel (multilingual)"
+    label: "Rachel"
     provider: elevenlabs
     model: eleven_multilingual_v2
     voice: 21m00Tcm4TlvDq8ikWAM
@@ -17,7 +17,7 @@ presets:
     enabled: true
 
   - id: "el-adam"
-    label: "ElevenLabs — Adam (multilingual)"
+    label: "Adam"
     provider: elevenlabs
     model: eleven_multilingual_v2
     voice: pNInz6obpgDQGcFmaJgB
@@ -25,7 +25,7 @@ presets:
     enabled: false
 
   - id: "oa-nova-hd"
-    label: "OpenAI HD — nova"
+    label: "nova"
     provider: openai
     model: tts-1-hd
     voice: nova
@@ -33,7 +33,7 @@ presets:
     enabled: true
 
   - id: "oa-shimmer-hd"
-    label: "OpenAI HD — shimmer"
+    label: "shimmer"
     provider: openai
     model: tts-1-hd
     voice: shimmer
@@ -41,7 +41,7 @@ presets:
     enabled: false
 
   - id: "or-openai-mini-onyx"
-    label: "OpenAI 4o-mini-tts — onyx (via OpenRouter)"
+    label: "onyx"
     provider: openrouter
     model: openai/gpt-4o-mini-tts-2025-12-15
     voice: onyx
@@ -49,7 +49,7 @@ presets:
     enabled: true
 
   - id: "cartesia-sonic2"
-    label: "Cartesia Sonic-2 — default voice"
+    label: "default voice"
     provider: cartesia
     model: sonic-2
     voice: 79a125e8-cd45-4c13-8a67-188112f4dd22
@@ -57,7 +57,7 @@ presets:
     enabled: false
 
   - id: "murf-axel"
-    label: "Murf — Axel (fr)"
+    label: "Axel (fr)"
     provider: murf
     model: GEN2
     voice: fr-FR-axel
@@ -65,7 +65,7 @@ presets:
     enabled: true
 
   - id: "murf-justine"
-    label: "Murf — Justine (fr)"
+    label: "Justine (fr)"
     provider: murf
     model: GEN2
     voice: fr-FR-justine
@@ -73,7 +73,7 @@ presets:
     enabled: false
 
   - id: "or-mistral-marie-neutral"
-    label: "Mistral Voxtral — Marie (neutral, fr) via OpenRouter"
+    label: "Marie (neutral)"
     provider: openrouter
     model: mistralai/voxtral-mini-tts-2603
     voice: 5a271406-039d-46fe-835b-fbbb00eaf08d
@@ -81,7 +81,7 @@ presets:
     enabled: true
 
   - id: "or-mistral-marie-happy"
-    label: "Mistral Voxtral — Marie (happy, fr) via OpenRouter"
+    label: "Marie (happy)"
     provider: openrouter
     model: mistralai/voxtral-mini-tts-2603
     voice: 49d024dd-981b-4462-bb17-74d381eb8fd7
@@ -89,7 +89,7 @@ presets:
     enabled: false
 
   - id: "or-mistral-marie-curious"
-    label: "Mistral Voxtral — Marie (curious, fr) via OpenRouter"
+    label: "Marie (curious)"
     provider: openrouter
     model: mistralai/voxtral-mini-tts-2603
     voice: e0580ce5-e63c-4cbe-88c8-a983b80c5f1f
@@ -97,63 +97,63 @@ presets:
     enabled: false
 
   - id: "azure-henri"
-    label: "Azure Neural — Henri (fr, homme)"
+    label: "Henri (homme, fr)"
     provider: azure
-    model: neural
+    model: neural-standard
     voice: fr-FR-HenriNeural
     language: fr-FR
     enabled: true
 
   - id: "azure-denise"
-    label: "Azure Neural — Denise (fr, femme)"
+    label: "Denise (femme, fr)"
     provider: azure
-    model: neural
+    model: neural-standard
     voice: fr-FR-DeniseNeural
     language: fr-FR
     enabled: true
 
   - id: "azure-vivienne-hd"
-    label: "Azure Neural HD — Vivienne Dragon (fr, expressive)"
+    label: "Vivienne Dragon (femme, expressive)"
     provider: azure
-    model: neural
+    model: neural-hd
     voice: fr-FR-Vivienne:DragonHDLatestNeural
     language: fr-FR
     enabled: true
 
   - id: "azure-remy-hd"
-    label: "Azure Neural HD — Remy Dragon (fr, expressive)"
+    label: "Remy Dragon (homme, expressive)"
     provider: azure
-    model: neural
+    model: neural-hd
     voice: fr-FR-Remy:DragonHDLatestNeural
     language: fr-FR
     enabled: true
 
   - id: "azure-vivienne-multi"
-    label: "Azure Multilingual — Vivienne (fr)"
+    label: "Vivienne Multilingual (femme)"
     provider: azure
-    model: neural
+    model: neural-multilingual
     voice: fr-FR-VivienneMultilingualNeural
     language: fr-FR
     enabled: false
 
   - id: "azure-remy-multi"
-    label: "Azure Multilingual — Remy (fr)"
+    label: "Remy Multilingual (homme)"
     provider: azure
-    model: neural
+    model: neural-multilingual
     voice: fr-FR-RemyMultilingualNeural
     language: fr-FR
     enabled: false
 
   - id: "azure-lucien-multi"
-    label: "Azure Multilingual — Lucien (fr)"
+    label: "Lucien Multilingual (homme)"
     provider: azure
-    model: neural
+    model: neural-multilingual
     voice: fr-FR-LucienMultilingualNeural
     language: fr-FR
     enabled: false
 
   - id: "or-gemini-kore"
-    label: "OpenRouter — Gemini Flash TTS / Kore (fr)"
+    label: "Kore"
     provider: openrouter
     model: google/gemini-3.1-flash-tts-preview
     voice: Kore
@@ -161,7 +161,7 @@ presets:
     enabled: true
 
   - id: "or-gemini-charon"
-    label: "OpenRouter — Gemini Flash TTS / Charon (fr)"
+    label: "Charon"
     provider: openrouter
     model: google/gemini-3.1-flash-tts-preview
     voice: Charon
@@ -169,7 +169,7 @@ presets:
     enabled: false
 
   - id: "or-sesame"
-    label: "OpenRouter — Sesame CSM-1b (Maya, EN)"
+    label: "Maya (EN)"
     provider: openrouter
     model: sesame/csm-1b
     voice: nova
@@ -177,7 +177,7 @@ presets:
     enabled: false
 
   - id: "or-kokoro"
-    label: "OpenRouter — Kokoro 82m / af_heart"
+    label: "af_heart"
     provider: openrouter
     model: hexgrad/kokoro-82m
     voice: af_heart

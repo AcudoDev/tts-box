@@ -171,11 +171,38 @@ textarea:focus {
 }
 .provider-toggle:hover { color: var(--provider-color) !important; }
 
-.provider-voices {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 0.15rem 1rem;
-  margin-top: 0.25rem;
+/* Single column for voices (per-model). Models become sub-sections. */
+.model-group {
+  margin-top: 0.65rem;
+  padding-left: 0.4rem;
+  border-left: 2px solid color-mix(in srgb, var(--provider-color) 25%, var(--border));
+}
+.model-group:first-of-type { margin-top: 0.5rem; }
+
+.model-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.1rem 0.4rem 0.25rem;
+}
+.model-name {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  color: var(--fg-soft);
+  background: color-mix(in srgb, var(--provider-color) 10%, transparent);
+  padding: 0.1rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.model-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.model-voices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
 }
 
 label.preset {

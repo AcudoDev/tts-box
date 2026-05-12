@@ -37,7 +37,9 @@ _PRICE_PER_1K_CHARS: dict[tuple[str, str], float] = {
     # --- Mistral Voxtral TTS is now reached via OpenRouter (see below). ---
 
     # --- Azure Speech (Neural Standard $16/1M chars on S0; F0 tier = 0.5M chars free/month) ---
-    ("azure", "neural"): 0.016,
+    ("azure", "neural-standard"):     0.016,
+    ("azure", "neural-hd"):           0.030,  # Dragon HD voices, premium tier
+    ("azure", "neural-multilingual"): 0.024,  # multilingual voices, slight premium
 
     # --- OpenRouter (per-token pricing converted to per-1k chars ~ 250 tokens/1k chars) ---
     ("openrouter", "google/gemini-3.1-flash-tts-preview"): 0.00025,
