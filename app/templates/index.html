@@ -7,34 +7,65 @@
   <script src="https://unpkg.com/htmx.org@2.0.3"></script>
 </head>
 <body>
-  <header><h1>TTS Box</h1></header>
+  <header>
+    <h1>TTS Box</h1>
+    <p class="tagline">Compare TTS providers side-by-side</p>
+  </header>
 
   <main>
     <form id="gen-form"
           hx-post="/generate"
           hx-target="#results"
           hx-swap="innerHTML">
-      <textarea name="text" required autofocus rows="4"
-                placeholder="Texte à synthétiser…">Bonjour, voici un texte de test pour comparer plusieurs voix de synthèse vocale. Évaluez maintenant la prosodie, le rythme et la qualité entre nos fournisseurs.</textarea>
+      <label class="field-label" for="text-input">Texte à synthétiser</label>
+      <textarea id="text-input" name="text" required autofocus rows="4"
+                placeholder="Tape ou colle ton texte ici…">Bonjour, voici un texte de test pour comparer plusieurs voix de synthèse vocale. Évaluez maintenant la prosodie, le rythme et la qualité entre nos fournisseurs.</textarea>
 
-      <fieldset>
-        <legend>Voix à comparer</legend>
-        {% for p in presets %}
-          <label class="preset {% if p.disabled_reason %}disabled{% endif %}"
-                 {% if p.disabled_reason %}title="{{ p.disabled_reason }}"{% endif %}>
-            <input type="checkbox"
-                   name="selected"
-                   value="{{ p.id }}"
-                   {% if p.enabled and not p.disabled_reason %}checked{% endif %}
-                   {% if p.disabled_reason %}disabled{% endif %} />
-            {{ p.label }}
-            {% if p.disabled_reason %}<span class="hint">({{ p.disabled_reason }})</span>{% endif %}
-          </label>
-        {% endfor %}
-      </fieldset>
+      <div class="voices-header">
+        <div class="voices-title">
+          <h2>Voix à comparer</h2>
+          <span class="voices-summary"><span id="count">0</span> sélectionnée<span id="count-plural">s</span></span>
+        </div>
+        <div class="voices-actions">
+          <button type="button" class="link-btn" data-toggle-all="true">Tout cocher</button>
+          <span class="sep">·</span>
+          <button type="button" class="link-btn" data-toggle-all="false">Tout décocher</button>
+        </div>
+      </div>
 
-      <button type="submit">
-        Générer (<span id="count">0</span> sélectionnés)
+      {% for provider, presets in groups %}
+        {% set display = provider_display.get(provider, {"label": provider, "color": "#888"}) %}
+        {% set all_disabled = presets|selectattr("disabled_reason")|list|length == presets|length %}
+        <fieldset class="provider-group {% if all_disabled %}provider-disabled{% endif %}"
+                  data-provider="{{ provider }}"
+                  style="--provider-color: {{ display.color }}">
+          <legend>
+            <span class="provider-dot"></span>
+            <span class="provider-name">{{ display.label }}</span>
+            <span class="provider-count">(<span class="provider-checked">0</span>/{{ presets|length }})</span>
+            {% if not all_disabled %}
+              <button type="button" class="provider-toggle link-btn" data-toggle-provider="{{ provider }}">tout</button>
+            {% endif %}
+          </legend>
+          <div class="provider-voices">
+            {% for p in presets %}
+              <label class="preset {% if p.disabled_reason %}disabled{% endif %}"
+                     {% if p.disabled_reason %}title="{{ p.disabled_reason }}"{% endif %}>
+                <input type="checkbox"
+                       name="selected"
+                       value="{{ p.id }}"
+                       {% if p.enabled and not p.disabled_reason %}checked{% endif %}
+                       {% if p.disabled_reason %}disabled{% endif %} />
+                <span class="preset-label">{{ p.label }}</span>
+                {% if p.disabled_reason %}<span class="hint">{{ p.disabled_reason }}</span>{% endif %}
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+      {% endfor %}
+
+      <button type="submit" class="generate-btn">
+        Générer (<span id="count-cta">0</span>)
       </button>
     </form>
 
@@ -44,20 +75,60 @@
   <script>
     const form = document.getElementById("gen-form");
     const countEl = document.getElementById("count");
-    const updateCount = () => {
-      countEl.textContent = form.querySelectorAll(
-        'input[name="selected"]:checked'
-      ).length;
-    };
-    form.addEventListener("change", updateCount);
-    updateCount();
+    const countCta = document.getElementById("count-cta");
+    const countPlural = document.getElementById("count-plural");
 
+    function updateCounts() {
+      const checked = form.querySelectorAll('input[name="selected"]:checked').length;
+      countEl.textContent = checked;
+      countCta.textContent = checked;
+      countPlural.style.visibility = checked > 1 ? "visible" : "hidden";
+
+      // Per-provider counts
+      form.querySelectorAll('.provider-group').forEach(group => {
+        const total = group.querySelectorAll('input[name="selected"]').length;
+        const sel = group.querySelectorAll('input[name="selected"]:checked').length;
+        const out = group.querySelector('.provider-checked');
+        if (out) out.textContent = sel;
+        group.classList.toggle('has-selection', sel > 0);
+      });
+    }
+
+    form.addEventListener("change", (e) => {
+      if (e.target.name === "selected") updateCounts();
+    });
+
+    // Global toggle (cocher / décocher tout)
+    form.querySelectorAll('[data-toggle-all]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.toggleAll === "true";
+        form.querySelectorAll('input[name="selected"]:not(:disabled)').forEach(cb => {
+          cb.checked = target;
+        });
+        updateCounts();
+      });
+    });
+
+    // Per-provider toggle
+    form.querySelectorAll('[data-toggle-provider]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const group = btn.closest('.provider-group');
+        const boxes = group.querySelectorAll('input[name="selected"]:not(:disabled)');
+        const allChecked = Array.from(boxes).every(cb => cb.checked);
+        boxes.forEach(cb => { cb.checked = !allChecked; });
+        updateCounts();
+      });
+    });
+
+    // Ctrl+Enter to submit from textarea
     document.querySelector("textarea").addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         e.preventDefault();
         form.requestSubmit();
       }
     });
+
+    updateCounts();
   </script>
 </body>
 </html>

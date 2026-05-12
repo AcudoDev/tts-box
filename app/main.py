@@ -27,12 +27,41 @@ PRESETS = load_presets(
 SYNTH = Synthesizer()
 
 
+_PROVIDER_DISPLAY = {
+    "elevenlabs": {"label": "ElevenLabs",  "color": "#7c3aed"},
+    "openai":     {"label": "OpenAI",      "color": "#10a37f"},
+    "cartesia":   {"label": "Cartesia",    "color": "#6b7280"},
+    "murf":       {"label": "Murf",        "color": "#ea580c"},
+    "azure":      {"label": "Azure Speech","color": "#0078d4"},
+    "openrouter": {"label": "OpenRouter",  "color": "#6366f1"},
+}
+
+
+def _group_presets_by_provider(presets):
+    groups: dict[str, list] = {}
+    for p in presets:
+        groups.setdefault(p.provider, []).append(p)
+    ordered = []
+    seen = set()
+    for provider in _PROVIDER_DISPLAY:
+        if provider in groups:
+            ordered.append((provider, groups[provider]))
+            seen.add(provider)
+    for provider, items in groups.items():
+        if provider not in seen:
+            ordered.append((provider, items))
+    return ordered
+
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     return templates.TemplateResponse(
         request,
         "index.html",
-        {"presets": PRESETS},
+        {
+            "groups": _group_presets_by_provider(PRESETS),
+            "provider_display": _PROVIDER_DISPLAY,
+        },
     )
 
 
