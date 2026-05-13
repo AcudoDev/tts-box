@@ -104,6 +104,56 @@ presets:
     language: fr
     enabled: false
 
+  # ─── OpenAI gpt-4o-mini-tts via OpenRouter (11 voix multilingues) ───
+  - id: "or-openai-mini-alloy"
+    label: "alloy"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
+    voice: alloy
+    language: fr
+    enabled: false
+  - id: "or-openai-mini-ash"
+    label: "ash"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
+    voice: ash
+    language: fr
+    enabled: false
+  - id: "or-openai-mini-ballad"
+    label: "ballad"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
+    voice: ballad
+    language: fr
+    enabled: false
+  - id: "or-openai-mini-coral"
+    label: "coral"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
+    voice: coral
+    language: fr
+    enabled: false
+  - id: "or-openai-mini-echo"
+    label: "echo"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
+    voice: echo
+    language: fr
+    enabled: false
+  - id: "or-openai-mini-fable"
+    label: "fable"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
+    voice: fable
+    language: fr
+    enabled: false
+  - id: "or-openai-mini-nova"
+    label: "nova"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
+    voice: nova
+    language: fr
+    enabled: false
   - id: "or-openai-mini-onyx"
     label: "onyx"
     provider: openrouter
@@ -111,6 +161,27 @@ presets:
     voice: onyx
     language: fr
     enabled: true
+  - id: "or-openai-mini-sage"
+    label: "sage"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
+    voice: sage
+    language: fr
+    enabled: false
+  - id: "or-openai-mini-shimmer"
+    label: "shimmer"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
+    voice: shimmer
+    language: fr
+    enabled: false
+  - id: "or-openai-mini-verse"
+    label: "verse"
+    provider: openrouter
+    model: openai/gpt-4o-mini-tts-2025-12-15
+    voice: verse
+    language: fr
+    enabled: false
 
   - id: "cartesia-sonic2"
     label: "default voice"
@@ -157,6 +228,30 @@ presets:
     provider: openrouter
     model: mistralai/voxtral-mini-tts-2603
     voice: e0580ce5-e63c-4cbe-88c8-a983b80c5f1f
+    language: fr
+    enabled: false
+
+  - id: "or-mistral-marie-sad"
+    label: "Marie (sad)"
+    provider: openrouter
+    model: mistralai/voxtral-mini-tts-2603
+    voice: 4adeb2c6-25a3-44bc-8100-5234dfc1193b
+    language: fr
+    enabled: false
+
+  - id: "or-mistral-marie-excited"
+    label: "Marie (excited)"
+    provider: openrouter
+    model: mistralai/voxtral-mini-tts-2603
+    voice: 2f62b1af-aea3-4079-9d10-7ca665ee7243
+    language: fr
+    enabled: false
+
+  - id: "or-mistral-marie-angry"
+    label: "Marie (angry)"
+    provider: openrouter
+    model: mistralai/voxtral-mini-tts-2603
+    voice: a7c07cdc-1c35-4d87-a938-c610a654f600
     language: fr
     enabled: false
 
@@ -312,14 +407,63 @@ presets:
     language: fr-FR
     enabled: false
 
-  - id: "or-gemini-kore"
-    label: "Kore"
+  # ─── Google Gemini Flash TTS via OpenRouter (30 voix multilingues) ───
+  - id: "or-gemini-achernar"
+    label: "Achernar"
     provider: openrouter
     model: google/gemini-3.1-flash-tts-preview
-    voice: Kore
+    voice: Achernar
     language: fr
-    enabled: true
-
+    enabled: false
+  - id: "or-gemini-achird"
+    label: "Achird"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Achird
+    language: fr
+    enabled: false
+  - id: "or-gemini-algenib"
+    label: "Algenib"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Algenib
+    language: fr
+    enabled: false
+  - id: "or-gemini-algieba"
+    label: "Algieba"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Algieba
+    language: fr
+    enabled: false
+  - id: "or-gemini-alnilam"
+    label: "Alnilam"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Alnilam
+    language: fr
+    enabled: false
+  - id: "or-gemini-aoede"
+    label: "Aoede"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Aoede
+    language: fr
+    enabled: false
+  - id: "or-gemini-autonoe"
+    label: "Autonoe"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Autonoe
+    language: fr
+    enabled: false
+  - id: "or-gemini-callirrhoe"
+    label: "Callirrhoe"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Callirrhoe
+    language: fr
+    enabled: false
   - id: "or-gemini-charon"
     label: "Charon"
     provider: openrouter
@@ -327,19 +471,159 @@ presets:
     voice: Charon
     language: fr
     enabled: false
-
-  - id: "or-sesame"
-    label: "Maya (EN)"
+  - id: "or-gemini-despina"
+    label: "Despina"
     provider: openrouter
-    model: sesame/csm-1b
-    voice: nova
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Despina
+    language: fr
+    enabled: false
+  - id: "or-gemini-enceladus"
+    label: "Enceladus"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Enceladus
+    language: fr
+    enabled: false
+  - id: "or-gemini-erinome"
+    label: "Erinome"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Erinome
+    language: fr
+    enabled: false
+  - id: "or-gemini-fenrir"
+    label: "Fenrir"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Fenrir
+    language: fr
+    enabled: false
+  - id: "or-gemini-gacrux"
+    label: "Gacrux"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Gacrux
+    language: fr
+    enabled: false
+  - id: "or-gemini-iapetus"
+    label: "Iapetus"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Iapetus
+    language: fr
+    enabled: false
+  - id: "or-gemini-kore"
+    label: "Kore"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Kore
+    language: fr
+    enabled: true
+  - id: "or-gemini-laomedeia"
+    label: "Laomedeia"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Laomedeia
+    language: fr
+    enabled: false
+  - id: "or-gemini-leda"
+    label: "Leda"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Leda
+    language: fr
+    enabled: false
+  - id: "or-gemini-orus"
+    label: "Orus"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Orus
+    language: fr
+    enabled: false
+  - id: "or-gemini-puck"
+    label: "Puck"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Puck
+    language: fr
+    enabled: false
+  - id: "or-gemini-pulcherrima"
+    label: "Pulcherrima"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Pulcherrima
+    language: fr
+    enabled: false
+  - id: "or-gemini-rasalgethi"
+    label: "Rasalgethi"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Rasalgethi
+    language: fr
+    enabled: false
+  - id: "or-gemini-sadachbia"
+    label: "Sadachbia"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Sadachbia
+    language: fr
+    enabled: false
+  - id: "or-gemini-sadaltager"
+    label: "Sadaltager"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Sadaltager
+    language: fr
+    enabled: false
+  - id: "or-gemini-schedar"
+    label: "Schedar"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Schedar
+    language: fr
+    enabled: false
+  - id: "or-gemini-sulafat"
+    label: "Sulafat"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Sulafat
+    language: fr
+    enabled: false
+  - id: "or-gemini-umbriel"
+    label: "Umbriel"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Umbriel
+    language: fr
+    enabled: false
+  - id: "or-gemini-vindemiatrix"
+    label: "Vindemiatrix"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Vindemiatrix
+    language: fr
+    enabled: false
+  - id: "or-gemini-zephyr"
+    label: "Zephyr"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Zephyr
+    language: fr
+    enabled: false
+  - id: "or-gemini-zubenelgenubi"
+    label: "Zubenelgenubi"
+    provider: openrouter
+    model: google/gemini-3.1-flash-tts-preview
+    voice: Zubenelgenubi
     language: fr
     enabled: false
 
-  - id: "or-kokoro"
-    label: "af_heart"
+  # ─── Kokoro 82m via OpenRouter (1 voix FR : ff_siwis) ───
+  - id: "or-kokoro-siwis"
+    label: "Siwis"
     provider: openrouter
     model: hexgrad/kokoro-82m
-    voice: af_heart
+    voice: ff_siwis
     language: fr
     enabled: false
