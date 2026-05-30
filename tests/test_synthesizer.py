@@ -1,17 +1,16 @@
 import asyncio
 import pytest
-from app.synthesizer import Synthesizer, Result
+from app.synthesizer import Synthesizer
 from app.providers.base import TTSProvider
+from app.voice_catalog import Selection
 
 
 class FakeProvider(TTSProvider):
     name = "fake_synth"
     api_key_env = "FAKE_SYNTH_KEY"
 
-    def __init__(self, audio: bytes = b"AUDIO", mime: str = "audio/mpeg", fail: bool = False, delay: float = 0):
+    def __init__(self, fail: bool = False, delay: float = 0):
         super().__init__(api_key="k")
-        self._audio = audio
-        self._mime = mime
         self._fail = fail
         self._delay = delay
 
@@ -23,50 +22,49 @@ class FakeProvider(TTSProvider):
             await asyncio.sleep(self._delay)
         if self._fail:
             raise RuntimeError("boom")
-        return (self._audio, self._mime)
+        return (b"AUDIO", "audio/mpeg")
+
+
+def _sel(oid):
+    return Selection(id=oid, label="Voice", provider="fake_synth", model="m", voice="v", language=None)
 
 
 async def test_run_session_populates_cache():
     synth = Synthesizer()
     provider = FakeProvider()
-    tasks = [
-        ("p1", provider, "m", "v", None),
-        ("p2", provider, "m", "v", None),
-    ]
-    session_id = synth.start_session("hello", tasks)
-    await synth.wait_all(session_id)
-
-    r1 = synth.get(session_id, "p1")
+    items = [(_sel("o1"), provider), (_sel("o2"), provider)]
+    sid = synth.start_session("hello", items)
+    await synth.wait_all(sid)
+    r1 = synth.get(sid, "o1")
     assert r1.status == "done"
     assert r1.audio == b"AUDIO"
-    assert r1.mime == "audio/mpeg"
-    assert r1.latency_ms is not None and r1.latency_ms >= 0
     assert r1.char_count == len("hello")
-    # Unknown provider → cost_usd is None.
-    assert r1.cost_usd is None
 
 
-async def test_run_session_error_does_not_crash():
+async def test_get_selection_returns_metadata():
     synth = Synthesizer()
-    good = FakeProvider()
-    bad = FakeProvider(fail=True)
-    tasks = [("p1", good, "m", "v", None), ("p2", bad, "m", "v", None)]
-    session_id = synth.start_session("hi", tasks)
-    await synth.wait_all(session_id)
-    assert synth.get(session_id, "p1").status == "done"
-    assert synth.get(session_id, "p2").status == "error"
-    assert "boom" in synth.get(session_id, "p2").error_msg
+    sid = synth.start_session("hi", [(_sel("o1"), FakeProvider())])
+    sel = synth.get_selection(sid, "o1")
+    assert sel is not None and sel.label == "Voice" and sel.provider == "fake_synth"
+    assert synth.get_selection(sid, "ghost") is None
 
 
-async def test_new_session_purges_old_cache():
+async def test_error_does_not_crash_others():
     synth = Synthesizer()
-    provider = FakeProvider()
-    s1 = synth.start_session("hi", [("p1", provider, "m", "v", None)])
+    items = [(_sel("ok"), FakeProvider()), (_sel("ko"), FakeProvider(fail=True))]
+    sid = synth.start_session("hi", items)
+    await synth.wait_all(sid)
+    assert synth.get(sid, "ok").status == "done"
+    assert synth.get(sid, "ko").status == "error"
+    assert "boom" in synth.get(sid, "ko").error_msg
+
+
+async def test_new_session_purges_old():
+    synth = Synthesizer()
+    s1 = synth.start_session("hi", [(_sel("o1"), FakeProvider())])
     await synth.wait_all(s1)
-    assert synth.get(s1, "p1") is not None
-
-    s2 = synth.start_session("bye", [("p1", provider, "m", "v", None)])
-    assert synth.get(s1, "p1") is None  # purged
+    s2 = synth.start_session("bye", [(_sel("o1"), FakeProvider())])
+    assert synth.get(s1, "o1") is None
 
 
 def test_get_unknown_returns_none():

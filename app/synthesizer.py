@@ -8,6 +8,7 @@ from typing import Literal
 import httpx
 from app.providers.base import TTSProvider
 from app.pricing import estimate_cost_usd
+from app.voice_catalog import Selection
 
 
 def _format_error(e: Exception) -> str:
@@ -55,6 +56,7 @@ class Result:
 @dataclass
 class _Session:
     results: dict[str, Result] = field(default_factory=dict)
+    selections: dict[str, Selection] = field(default_factory=dict)
     tasks: list[asyncio.Task] = field(default_factory=list)
 
 
@@ -67,20 +69,27 @@ class Synthesizer:
     def start_session(
         self,
         text: str,
-        items: list[tuple[str, TTSProvider, str, str, str | None]],
+        items: list[tuple[Selection, TTSProvider]],
     ) -> str:
         # Purge everything else — mono-user, only one session at a time.
         self._sessions.clear()
         session_id = uuid.uuid4().hex[:8]
         session = _Session()
         self._sessions[session_id] = session
-        for preset_id, provider, model, voice, language in items:
-            session.results[preset_id] = Result(status="pending")
+        for sel, provider in items:
+            session.selections[sel.id] = sel
+            session.results[sel.id] = Result(status="pending")
             task = asyncio.create_task(
-                self._run(session, preset_id, provider, text, model, voice, language)
+                self._run(session, sel.id, provider, text, sel.model, sel.voice, sel.language)
             )
             session.tasks.append(task)
         return session_id
+
+    def get_selection(self, session_id: str, option_id: str) -> Selection | None:
+        session = self._sessions.get(session_id)
+        if not session:
+            return None
+        return session.selections.get(option_id)
 
     async def _run(
         self,
