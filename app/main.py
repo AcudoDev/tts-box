@@ -159,7 +159,10 @@ async def result(request: Request, session_id: str, option_id: str):
     if res.status == "error":
         return templates.TemplateResponse(
             request, "card_error.html",
-            {"option": option, "error_msg": res.error_msg, "latency_ms": res.latency_ms},
+            {
+                "option": option, "session_id": session_id,
+                "error_msg": res.error_msg, "latency_ms": res.latency_ms,
+            },
         )
     return templates.TemplateResponse(
         request, "card_done.html",

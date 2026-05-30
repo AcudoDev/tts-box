@@ -1,5 +1,6 @@
 <div class="card loading"
      id="card-{{ option.id }}"
+     aria-busy="true"
      hx-get="/result/{{ session_id }}/{{ option.id }}"
      hx-trigger="load delay:500ms"
      hx-swap="outerHTML">
@@ -7,5 +8,8 @@
     <span class="card-voice">{{ option.label }}</span>
     <span class="card-meta">{{ option.provider }} · {{ option.model }}{% if option.language %} · {{ option.language }}{% endif %}</span>
   </div>
-  <div class="card-body">⏳ Generating…</div>
+  <div class="card-body">
+    <span class="loading-dots" aria-hidden="true"><span></span><span></span><span></span></span>
+    <span class="sr-only">Generating {{ option.label }}</span>
+  </div>
 </div>

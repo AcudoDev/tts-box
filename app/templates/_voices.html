@@ -1,5 +1,7 @@
 <div class="voices-toolbar">
+  <label class="sr-only" for="voice-search">Search voices by name</label>
   <input type="search" id="voice-search" placeholder="Search a voice…" autocomplete="off" />
+  <label class="sr-only" for="gender-filter">Filter voices by gender</label>
   <select id="gender-filter">
     <option value="">All genders</option>
     <option value="female">Female</option>
@@ -21,7 +23,7 @@
     <summary>
       <span class="provider-dot" aria-hidden="true"></span>
       <span class="provider-name">{{ display.label }}</span>
-      <span class="provider-count">(<span class="provider-checked">0</span>/<span class="provider-shown">{{ all_voices|length }}</span>)</span>
+      <span class="provider-count" aria-hidden="true">(<span class="provider-checked">0</span>/<span class="provider-shown">{{ all_voices|length }}</span>)</span>
       <button type="button" class="provider-toggle link-btn"
               data-toggle-provider="{{ provider }}"
               aria-label="Toggle all visible {{ display.label }} voices">all</button>
@@ -42,14 +44,16 @@
             <label class="preset" data-name="{{ v.name|lower }}" data-gender="{{ v.gender or '' }}">
               <input type="checkbox" name="selected" value="{{ provider }}|{{ model }}|{{ v.id }}" />
               {% if v.multilingual %}
-                <span class="flag flag-globe" title="multilingual">🌐</span>
+                <span class="flag flag-globe" aria-hidden="true">🌐</span>
+                <span class="sr-only">multilingual</span>
               {% else %}
                 {% set cc = v.language | flag_country %}
-                {% if cc %}<span class="fi fi-{{ cc }} flag" title="{{ v.language }}"></span>
-                {% else %}<span class="flag flag-globe" title="{{ v.language or '' }}">🌐</span>{% endif %}
+                {% if cc %}<span class="fi fi-{{ cc }} flag" aria-hidden="true"></span>
+                {% else %}<span class="flag flag-globe" aria-hidden="true">🌐</span>{% endif %}
+                {% if v.language %}<span class="sr-only">{{ v.language }}</span>{% endif %}
               {% endif %}
               <span class="preset-label">{{ v.name }}</span>
-              {% if v.gender %}<span class="tag tag-gender">{{ v.gender }}</span>{% endif %}
+              {% if v.gender %}<span class="tag tag-gender" aria-hidden="true">{{ v.gender }}</span><span class="sr-only">{{ v.gender }}</span>{% endif %}
             </label>
           {% endfor %}
         </div>

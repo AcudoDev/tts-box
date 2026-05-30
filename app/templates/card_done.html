@@ -3,19 +3,24 @@
     <span class="card-voice">{{ option.label }}</span>
     <span class="card-meta">{{ option.provider }} · {{ option.model }}{% if option.language %} · {{ option.language }}{% endif %}</span>
   </div>
+  <span class="sr-only">Done: {{ option.label }}, {{ latency_ms }} ms</span>
   <audio src="/audio/{{ session_id }}/{{ option.id }}.{{ ext }}" controls preload="auto"></audio>
   <div class="card-footer">
     <span class="latency">{{ latency_ms }} ms</span>
     {% if cost_usd is not none %}
       {% if cost_usd > 0 and cost_usd < 0.0001 %}
-        <span class="cost" title="{{ char_count }} chars · estimate">&lt;$0.0001</span>
+        <span class="cost" title="{{ char_count }} chars · estimate"
+              aria-label="Estimated cost under $0.0001 for {{ char_count }} characters">&lt;$0.0001</span>
       {% else %}
-        <span class="cost" title="{{ char_count }} chars · estimate">${{ "%.4f"|format(cost_usd) }}</span>
+        <span class="cost" title="{{ char_count }} chars · estimate"
+              aria-label="Estimated cost ${{ '%.4f'|format(cost_usd) }} for {{ char_count }} characters">${{ "%.4f"|format(cost_usd) }}</span>
       {% endif %}
     {% else %}
-      <span class="cost muted" title="Unknown price for this model">— $</span>
+      <span class="cost muted" title="Unknown price for this model"
+            aria-label="Cost unknown for this model"><span aria-hidden="true">— $</span></span>
     {% endif %}
     <a class="download" href="/audio/{{ session_id }}/{{ option.id }}.{{ ext }}"
-       download="{{ option.id }}.{{ ext }}">↓ DL</a>
+       download="{{ option.id }}.{{ ext }}" aria-label="Download {{ option.label }} audio">
+      <span aria-hidden="true">↓</span> DL</a>
   </div>
 </div>
