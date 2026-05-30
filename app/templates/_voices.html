@@ -43,14 +43,15 @@
           {% for v in voices %}
             <label class="preset" data-name="{{ v.name|lower }}" data-gender="{{ v.gender or '' }}">
               <input type="checkbox" name="selected" value="{{ provider }}|{{ model }}|{{ v.id }}" />
-              {% if v.multilingual %}
-                <span class="flag flag-globe" aria-hidden="true">🌐</span>
-                <span class="sr-only">multilingual</span>
+              {# Flag = the voice's own declared language (origin), regardless of whether
+                 the model is multilingual. Globe only when the voice has no language. #}
+              {% set cc = v.language | flag_country %}
+              {% if cc %}
+                <span class="fi fi-{{ cc }} flag" aria-hidden="true"></span>
+                <span class="sr-only">{{ v.language }}</span>
               {% else %}
-                {% set cc = v.language | flag_country %}
-                {% if cc %}<span class="fi fi-{{ cc }} flag" aria-hidden="true"></span>
-                {% else %}<span class="flag flag-globe" aria-hidden="true">🌐</span>{% endif %}
-                {% if v.language %}<span class="sr-only">{{ v.language }}</span>{% endif %}
+                <span class="flag flag-globe" aria-hidden="true" title="multilingual">🌐</span>
+                <span class="sr-only">multilingual</span>
               {% endif %}
               <span class="preset-label">{{ v.name }}</span>
               {% if v.gender %}<span class="tag tag-gender" aria-hidden="true">{{ v.gender }}</span><span class="sr-only">{{ v.gender }}</span>{% endif %}
