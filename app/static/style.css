@@ -46,6 +46,9 @@
   /* ── Layout ───────────────────────────────────────────────────── */
   --gutter: var(--space-4); /* 1rem mobile → 1.5rem @600 → 2rem @960 */
 
+  /* Native form controls / scrollbars follow the active theme. */
+  color-scheme: light;
+
   /* ── Semantic role tokens · LIGHT ─────────────────────────────── */
   --bg: #f5f6f8;
   --surface: #ffffff;
@@ -84,6 +87,7 @@
 /* ── Semantic role tokens · DARK (blue-gray ink, not pure black) ── */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #0d1117;
     --surface: #161b22;
     --surface-2: #1c222b;
@@ -118,6 +122,7 @@
 
 /* ── Manual theme override (toggle) — always wins over OS preference ── */
 [data-theme="light"] {
+  color-scheme: light;
   --bg: #f5f6f8;
   --surface: #ffffff;
   --surface-2: #f9fafb;
@@ -146,6 +151,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg: #0d1117;
   --surface: #161b22;
   --surface-2: #1c222b;
@@ -338,6 +344,7 @@ textarea {
   border-radius: var(--radius);
   resize: vertical;
   background: var(--surface);
+  color: var(--fg);
   transition: border-color 120ms, box-shadow 120ms;
 }
 textarea:focus {
@@ -736,12 +743,13 @@ label.preset input[type="checkbox"]:disabled {
 #voices { padding-bottom: 4.5rem; }
 
 .lang-row { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; }
-.lang-row select { padding: .35rem .5rem; border-radius: 6px; }
+.lang-row select { padding: .35rem .5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--fg); }
 
 /* Sticky top filter bar — rides the top edge while the voice list scrolls.
    Solid surface (+ side padding/negative margin) so rows don't show through. */
 .voices-toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: .6rem;
   position: sticky;
   top: 0;
