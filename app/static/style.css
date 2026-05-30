@@ -1,30 +1,103 @@
+/* =====================================================================
+   Design tokens — two layers
+   Layer 1: primitives (raw color ramps + space/type/radius/motion scales)
+   Layer 2: semantic role tokens that map onto the primitives.
+   Phase 0 is pure plumbing: the LIGHT theme renders identically to before.
+   The final LIGHT/DARK palettes + theme-switch mechanism arrive in Phase 1.
+   ===================================================================== */
 :root {
-  --bg: #f4f5f7;
-  --surface: #ffffff;
-  --surface-2: #fafbfc;
-  --fg: #111827;
-  --fg-soft: #374151;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --border-strong: #d1d5db;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --error: #dc2626;
-  --error-bg: #fef2f2;
-  --ok: #059669;
-  --ok-bg: #ecfdf5;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-lg: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
-  --radius: 10px;
+  /* ── Layer 1 · primitive color ramps ──────────────────────────── */
+  /* Neutral ramp (gray) — current light surfaces/ink. */
+  --neutral-0: #ffffff;
+  --neutral-25: #fafbfc;
+  --neutral-50: #f4f5f7;
+  --neutral-200: #e5e7eb;
+  --neutral-300: #d1d5db;
+  --neutral-500: #6b7280;
+  --neutral-700: #374151;
+  --neutral-900: #111827;
+
+  /* Accent ramp. */
+  --accent-500: #2563eb;
+  --accent-600: #1d4ed8;
+  --accent-50: #eff6ff;
+
+  /* State ramps. */
+  --green-50: #ecfdf5;
+  --green-600: #059669;
+  --red-50: #fef2f2;
+  --red-600: #dc2626;
+
+  /* Alpha primitives (elevation + hairlines). */
+  --shadow-color: 0deg 0% 0%;
+  --flag-ring-color: rgba(0, 0, 0, 0.1);
+
+  /* ── Layer 1 · type scale ─────────────────────────────────────── */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --fs-xs: 0.72rem;
+  --fs-sm: 0.82rem;
+  --fs-base: 0.9rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.15rem;
+  --fs-xl: 1.4rem;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  /* ── Layer 1 · spacing scale ──────────────────────────────────── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  /* ── Layer 1 · radius scale ───────────────────────────────────── */
   --radius-sm: 6px;
-  --provider-color: #6b7280; /* default; overridden per fieldset */
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* ── Layer 1 · motion ─────────────────────────────────────────── */
+  --motion-fast: 80ms;
+  --motion: 120ms;
+  --motion-slow: 200ms;
+
+  /* ── Layer 1 · layout ─────────────────────────────────────────── */
+  --gutter: var(--space-4); /* 1rem mobile → 1.5rem @600 → 2rem @960 */
+
+  /* ── Layer 2 · semantic role tokens ───────────────────────────── */
+  --bg: var(--neutral-50);
+  --surface: var(--neutral-0);
+  --surface-2: var(--neutral-25);
+  --fg: var(--neutral-900);
+  --fg-soft: var(--neutral-700);
+  --muted: var(--neutral-500);
+  --border: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+  --accent: var(--accent-500);
+  --accent-hover: var(--accent-600);
+  --accent-soft: var(--accent-50);
+  --error: var(--red-600);
+  --error-bg: var(--red-50);
+  --ok: var(--green-600);
+  --ok-bg: var(--green-50);
+  --ring: color-mix(in srgb, var(--accent) 35%, transparent);
+  --flag-ring: var(--flag-ring-color);
+
+  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.04);
+  --shadow: 0 1px 3px hsl(var(--shadow-color) / 0.06), 0 1px 2px hsl(var(--shadow-color) / 0.04);
+  --shadow-lg: 0 4px 12px hsl(var(--shadow-color) / 0.06), 0 2px 4px hsl(var(--shadow-color) / 0.04);
+
+  --provider-color: var(--neutral-500); /* default; overridden per fieldset */
 }
 
 * { box-sizing: border-box; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--fg);
   margin: 0;
@@ -84,7 +157,7 @@ textarea {
 textarea:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 /* ── Voices header (title + actions) ────────────────── */
@@ -357,12 +430,11 @@ label.preset input[type="checkbox"]:disabled {
 .lang-row { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; }
 .lang-row select { padding: .35rem .5rem; border-radius: 6px; }
 .voices-toolbar { display: flex; gap: .6rem; margin: .5rem 0 1rem; }
-.voices-toolbar input[type="search"] { flex: 1; padding: .4rem .6rem; border-radius: 6px; border: 1px solid #ccc; }
-.tag { font-size: .68rem; padding: .05rem .35rem; border-radius: 4px; margin-left: .3rem; vertical-align: middle; }
-.tag-gender { background: #eef; color: #446; }
-.tag-ml { background: #efe; color: #363; }
-.empty-hint { color: #888; font-style: italic; padding: 1rem 0; }
+.voices-toolbar input[type="search"] { flex: 1; padding: .4rem .6rem; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); }
+.tag { font-size: .68rem; padding: .05rem .45rem; border-radius: var(--radius-pill); margin-left: .3rem; vertical-align: middle; }
+.tag-gender { background: var(--accent-soft); color: var(--accent); }
+.empty-hint { color: var(--muted); font-style: italic; padding: 1rem 0; }
 .flag { margin: 0 .4rem 0 .15rem; flex: 0 0 auto; }
-.fi.flag { width: 1.3em; height: .95em; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, .1); vertical-align: -.08em; }
+.fi.flag { width: 1.3em; height: .95em; border-radius: 2px; box-shadow: 0 0 0 1px var(--flag-ring); vertical-align: -.08em; }
 .flag-globe { font-size: 1rem; line-height: 1; }
 .lang-row select { font-size: .95rem; }
