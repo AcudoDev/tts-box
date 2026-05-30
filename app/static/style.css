@@ -353,3 +353,12 @@ label.preset input[type="checkbox"]:disabled {
   font-weight: 500;
 }
 .card-footer a.download:hover { text-decoration: underline; }
+
+.lang-row { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; }
+.lang-row select { padding: .35rem .5rem; border-radius: 6px; }
+.voices-toolbar { display: flex; gap: .6rem; margin: .5rem 0 1rem; }
+.voices-toolbar input[type="search"] { flex: 1; padding: .4rem .6rem; border-radius: 6px; border: 1px solid #ccc; }
+.tag { font-size: .68rem; padding: .05rem .35rem; border-radius: 4px; margin-left: .3rem; vertical-align: middle; }
+.tag-gender { background: #eef; color: #446; }
+.tag-ml { background: #efe; color: #363; }
+.empty-hint { color: #888; font-style: italic; padding: 1rem 0; }
