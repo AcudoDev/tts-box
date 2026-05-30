@@ -96,3 +96,66 @@ async def test_synthesize_http_error(provider):
     )
     with pytest.raises(httpx.HTTPStatusError):
         await provider.synthesize("x", "sesame/csm-1b", "nova")
+
+
+async def test_list_voices_gemini_has_30_multilingual(provider):
+    voices = await provider.list_voices("google/gemini-3.1-flash-tts-preview")
+    assert len(voices) == 30
+    assert all(v.multilingual for v in voices)
+    assert any(v.id == "Kore" for v in voices)
+
+
+async def test_list_voices_gpt4o_mini_has_13(provider):
+    # Verified 2026-05-30 against OpenAI's current catalogue: 13 voices
+    # (the older 11 + the two newest, marin and cedar). All multilingual.
+    voices = await provider.list_voices("openai/gpt-4o-mini-tts-2025-12-15")
+    assert {v.id for v in voices} >= {"alloy", "onyx", "shimmer", "marin", "cedar"}
+    assert len(voices) == 13
+    assert all(v.multilingual for v in voices)
+
+
+async def test_list_voices_voxtral_has_french_marie(provider):
+    # Verified preset ids from Mistral's official hosted demo (gb_/en_/fr_ scheme).
+    voices = await provider.list_voices("mistralai/voxtral-mini-tts-2603")
+    ids = {v.id for v in voices}
+    assert "fr_marie_neutral" in ids
+    assert "en_paul_neutral" in ids
+    marie = next(v for v in voices if v.id == "fr_marie_neutral")
+    assert marie.language == "fr"
+    assert marie.multilingual is True
+
+
+async def test_list_voices_kokoro_derives_language_from_prefix(provider):
+    voices = await provider.list_voices("hexgrad/kokoro-82m")
+    assert len(voices) == 54  # Verified full Kokoro preset catalogue
+    siwis = next(v for v in voices if v.id == "ff_siwis")
+    assert siwis.language == "fr"
+    assert siwis.multilingual is False
+    # Prefix → language: 'a'/'b' English, 'j' Japanese, 'z' Mandarin.
+    assert next(v for v in voices if v.id == "af_heart").language == "en"
+    assert next(v for v in voices if v.id == "jf_alpha").language == "ja"
+    assert next(v for v in voices if v.id == "zf_xiaobei").language == "zh"
+
+
+async def test_list_voices_orpheus_has_7_english(provider):
+    # Verified against OpenRouter's live supported_voices (7, English-only).
+    voices = await provider.list_voices("canopylabs/orpheus-3b-0.1-ft")
+    assert {v.id for v in voices} == {"tara", "leah", "jess", "leo", "dan", "mia", "zac"}
+    assert all(v.language == "en" and not v.multilingual for v in voices)
+
+
+async def test_list_voices_zonos_has_named_accent_voices(provider):
+    # Verified: OpenRouter exposes 5 fixed named voices for both Zonos variants.
+    voices = await provider.list_voices("zyphra/zonos-v0.1-transformer")
+    assert {v.id for v in voices} == {
+        "american_female", "american_male", "british_female", "british_male", "random",
+    }
+
+
+async def test_list_voices_cloning_model_is_empty(provider):
+    # sesame/csm-1b has no named voices (speaker-id / cloning only) → UI free-voice mode.
+    assert await provider.list_voices("sesame/csm-1b") == []
+
+
+def test_provider_voices_depend_on_model(provider):
+    assert provider.voices_depend_on_model is True
