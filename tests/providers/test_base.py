@@ -1,6 +1,8 @@
 import dataclasses
+
 import pytest
-from app.providers.base import Voice, TTSProvider, _REGISTRY
+
+from app.providers.base import _REGISTRY, TTSProvider, Voice
 
 
 def test_voice_minimal_fields():

@@ -1,7 +1,10 @@
 from __future__ import annotations
+
 import re
 import struct
+
 import httpx
+
 from app.providers.base import TTSProvider, Voice
 
 URL = "https://openrouter.ai/api/v1/audio/speech"

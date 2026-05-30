@@ -1,5 +1,6 @@
 import pytest
-from app.providers.base import TTSProvider, _REGISTRY
+
+from app.providers.base import _REGISTRY, TTSProvider
 
 
 @pytest.fixture(autouse=True)

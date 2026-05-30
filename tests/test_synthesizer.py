@@ -1,7 +1,7 @@
 import asyncio
-import pytest
-from app.synthesizer import Synthesizer
+
 from app.providers.base import TTSProvider
+from app.synthesizer import Synthesizer
 from app.voice_catalog import Selection
 
 
@@ -63,7 +63,7 @@ async def test_new_session_purges_old():
     synth = Synthesizer()
     s1 = synth.start_session("hi", [(_sel("o1"), FakeProvider())])
     await synth.wait_all(s1)
-    s2 = synth.start_session("bye", [(_sel("o1"), FakeProvider())])
+    synth.start_session("bye", [(_sel("o1"), FakeProvider())])  # purges previous session
     assert synth.get(s1, "o1") is None
 
 

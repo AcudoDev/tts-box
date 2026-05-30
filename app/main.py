@@ -1,16 +1,17 @@
 from __future__ import annotations
+
 from pathlib import Path
 from typing import Annotated
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from dotenv import load_dotenv
 
+from app import voice_catalog
 from app.registry import load_providers
 from app.synthesizer import Synthesizer
-from app import voice_catalog
 from app.voice_catalog import Selection, option_id, parse_token
 
 load_dotenv()

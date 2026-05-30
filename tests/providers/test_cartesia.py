@@ -1,7 +1,9 @@
 import json
+
+import httpx
 import pytest
 import respx
-import httpx
+
 from app.providers.cartesia import CartesiaProvider
 
 

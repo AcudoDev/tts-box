@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 import importlib
 import os
 import pkgutil
-from app.providers.base import TTSProvider, _REGISTRY
+
+from app.providers.base import _REGISTRY, TTSProvider
 
 
 def _discover() -> None:

@@ -1,12 +1,14 @@
 import json
 import struct
+
+import httpx
 import pytest
 import respx
-import httpx
+
 from app.providers.openrouter import (
+    _PCM_ONLY_MODELS,
     OpenRouterProvider,
     _wrap_pcm_as_wav,
-    _PCM_ONLY_MODELS,
 )
 
 

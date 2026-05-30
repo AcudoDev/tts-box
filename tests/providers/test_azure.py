@@ -1,6 +1,7 @@
+import httpx
 import pytest
 import respx
-import httpx
+
 from app.providers.azure import AzureSpeechProvider, _build_ssml, _locale_from_voice
 
 

@@ -1,6 +1,9 @@
 from __future__ import annotations
+
 import base64
+
 import httpx
+
 from app.providers.base import TTSProvider, Voice
 
 URL = "https://api.murf.ai/v1/speech/generate"

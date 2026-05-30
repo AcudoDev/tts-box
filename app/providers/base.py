@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -12,7 +13,7 @@ class Voice:
     multilingual: bool = False
 
 
-_REGISTRY: dict[str, type["TTSProvider"]] = {}
+_REGISTRY: dict[str, type[TTSProvider]] = {}
 
 
 class TTSProvider(ABC):

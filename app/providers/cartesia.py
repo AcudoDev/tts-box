@@ -1,5 +1,7 @@
 from __future__ import annotations
+
 import httpx
+
 from app.providers.base import TTSProvider, Voice
 
 BASE = "https://api.cartesia.ai"
