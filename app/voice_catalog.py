@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import sys
 import time
 from dataclasses import dataclass
 
@@ -57,19 +58,25 @@ async def fetch_all(
 ) -> dict[str, dict[str, list[Voice]]]:
     """{provider_name: {model: [Voice]}} — parallélisé, caché (TTL 1 h)."""
     async def _one(name: str, provider: TTSProvider) -> tuple[str, dict[str, list[Voice]]]:
-        models = provider.list_models()
-        if not provider.voices_depend_on_model and models:
-            shared = await _voices_for(name, provider, models[0], refresh=refresh)
-            # Réutilise la même liste pour tous les modèles, mais peuple le cache par modèle.
-            by_model = {}
-            for m in models:
-                _cache[(name, m)] = (time.monotonic(), shared)
-                by_model[m] = shared
-            return name, by_model
-        results = await asyncio.gather(
-            *(_voices_for(name, provider, m, refresh=refresh) for m in models)
-        )
-        return name, dict(zip(models, results))
+        try:
+            models = provider.list_models()
+            if not provider.voices_depend_on_model and models:
+                shared = await _voices_for(name, provider, models[0], refresh=refresh)
+                # Réutilise la même liste pour tous les modèles, mais peuple le cache par modèle.
+                by_model = {}
+                for m in models:
+                    _cache[(name, m)] = (time.monotonic(), shared)
+                    by_model[m] = shared
+                return name, by_model
+            results = await asyncio.gather(
+                *(_voices_for(name, provider, m, refresh=refresh) for m in models)
+            )
+            return name, dict(zip(models, results))
+        except Exception as e:
+            # A broken provider (bad key, rate-limit, network outage) must not break
+            # the whole catalog — skip it and let the healthy providers render.
+            print(f"[voice_catalog] listing voices for '{name}' failed: {e}", file=sys.stderr)
+            return name, {}
 
     pairs = await asyncio.gather(*(_one(n, p) for n, p in providers.items()))
     return dict(pairs)

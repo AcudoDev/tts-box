@@ -63,6 +63,21 @@ class _Counter(TTSProvider):
     async def synthesize(self, *a, **k): return (b"", "audio/mpeg")
 
 
+class _Boom(TTSProvider):
+    """Provider whose voice listing fails (e.g. expired API key)."""
+
+    name = "boom"
+    api_key_env = "BOOM_KEY"
+
+    def __init__(self):
+        super().__init__(api_key="k")
+
+    def list_models(self): return ["m"]
+    async def list_voices(self, model):
+        raise RuntimeError("bad key")
+    async def synthesize(self, *a, **k): return (b"", "audio/mpeg")
+
+
 @pytest.fixture(autouse=True)
 def _clear():
     clear_cache()
@@ -95,6 +110,16 @@ async def test_fetch_all_refresh_bypasses_cache():
     await fetch_all({"counter": p})
     await fetch_all({"counter": p}, refresh=True)
     assert p.calls == 2
+
+
+async def test_fetch_all_skips_failing_provider():
+    # A single broken provider (bad key, rate-limit, network) must not break the
+    # whole catalog — the healthy providers still come back.
+    good = _Counter()
+    bad = _Boom()
+    result = await fetch_all({"counter": good, "boom": bad})
+    assert result["counter"]["m1"]          # healthy provider present
+    assert result.get("boom", {}) == {}     # failing provider omitted, no crash
 
 
 def _fetched():
