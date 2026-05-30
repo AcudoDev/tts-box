@@ -7,6 +7,8 @@ that language), select the ones you want, and listen to the results as they stre
 **Providers:** ElevenLabs · OpenAI · Azure Speech · Cartesia · Murf · OpenRouter
 (Gemini, gpt-4o-mini, Voxtral, Kokoro, and more).
 
+![TTS Box — pick a language, browse every voice, compare side-by-side](docs/screenshot.png)
+
 ## How it works
 
 - **Dynamic voice discovery** — voices are fetched live from each provider's API

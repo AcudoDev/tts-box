@@ -22,6 +22,13 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 templates = Jinja2Templates(directory=ROOT / "templates")
 
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon() -> Response:
+    # Browsers auto-request /favicon.ico; return 204 so it isn't a noisy 404.
+    return Response(status_code=204)
+
+
 PROVIDERS = load_providers()
 SYNTH = Synthesizer()
 
