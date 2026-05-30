@@ -1,30 +1,44 @@
 from __future__ import annotations
 from pathlib import Path
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from typing import Annotated
+
+from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi.responses import HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from dotenv import load_dotenv
 
 from app.registry import load_providers
-from app.presets import load_presets
 from app.synthesizer import Synthesizer
+from app import voice_catalog
+from app.voice_catalog import Selection, option_id, parse_token
 
 load_dotenv()
 
 ROOT = Path(__file__).resolve().parent
-PROJECT_ROOT = ROOT.parent
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 templates = Jinja2Templates(directory=ROOT / "templates")
 
 PROVIDERS = load_providers()
-PRESETS = load_presets(
-    PROJECT_ROOT / "presets.yaml",
-    available_providers=set(PROVIDERS.keys()),
-)
 SYNTH = Synthesizer()
+
+DEFAULT_LANG = "en"
+
+# Texte d'exemple par langue (fallback EN). Sert d'amorce au chargement.
+SAMPLE_TEXT = {
+    "en": "Hello, this is a test sentence to compare several text-to-speech voices. "
+          "Listen to the prosody, rhythm and overall quality across providers.",
+    "fr": "Bonjour, voici un texte de test pour comparer plusieurs voix de synthèse vocale. "
+          "Évaluez la prosodie, le rythme et la qualité entre les fournisseurs.",
+    "es": "Hola, esta es una frase de prueba para comparar varias voces de síntesis de voz.",
+    "de": "Hallo, dies ist ein Testsatz zum Vergleich mehrerer Sprachausgabe-Stimmen.",
+}
+
+
+def _sample_text(lang: str) -> str:
+    return SAMPLE_TEXT.get(lang, SAMPLE_TEXT["en"])
 
 
 _PROVIDER_DISPLAY = {
@@ -35,95 +49,6 @@ _PROVIDER_DISPLAY = {
     "azure":      {"label": "Azure Speech","color": "#0078d4"},
     "openrouter": {"label": "OpenRouter",  "color": "#6366f1"},
 }
-
-
-def _group_presets_by_provider_and_model(presets):
-    """Two-level grouping: provider → model → list of presets.
-
-    Returns list[ (provider_name, list[ (model_name, list[Preset]) ]) ] preserving
-    the order in which providers/models first appear in `presets`.
-    """
-    # provider -> model -> [presets]
-    by_provider: dict[str, dict[str, list]] = {}
-    provider_order: list[str] = []
-    model_order: dict[str, list[str]] = {}
-    for p in presets:
-        if p.provider not in by_provider:
-            by_provider[p.provider] = {}
-            provider_order.append(p.provider)
-            model_order[p.provider] = []
-        if p.model not in by_provider[p.provider]:
-            by_provider[p.provider][p.model] = []
-            model_order[p.provider].append(p.model)
-        by_provider[p.provider][p.model].append(p)
-
-    # Prefer the canonical provider order, then fall back to insertion order.
-    ordered_providers = []
-    seen = set()
-    for provider in _PROVIDER_DISPLAY:
-        if provider in by_provider:
-            ordered_providers.append(provider)
-            seen.add(provider)
-    for provider in provider_order:
-        if provider not in seen:
-            ordered_providers.append(provider)
-
-    out = []
-    for provider in ordered_providers:
-        models = [(m, by_provider[provider][m]) for m in model_order[provider]]
-        out.append((provider, models))
-    return out
-
-
-@app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    return templates.TemplateResponse(
-        request,
-        "index.html",
-        {
-            "groups": _group_presets_by_provider_and_model(PRESETS),
-            "provider_display": _PROVIDER_DISPLAY,
-        },
-    )
-
-
-from fastapi import Form
-from typing import Annotated
-
-
-@app.post("/generate", response_class=HTMLResponse)
-async def generate(
-    request: Request,
-    text: Annotated[str, Form()],
-    selected: Annotated[list[str], Form()] = [],
-):
-    by_id = {p.id: p for p in PRESETS}
-    chosen = [
-        by_id[pid] for pid in selected
-        if pid in by_id and not by_id[pid].disabled_reason
-    ]
-
-    items = []
-    for preset in chosen:
-        provider = PROVIDERS.get(preset.provider)
-        if not provider:
-            continue
-        items.append((preset.id, provider, preset.model, preset.voice, preset.language))
-
-    session_id = SYNTH.start_session(text, items)
-
-    return templates.TemplateResponse(
-        request,
-        "_card_grid.html",
-        {
-            "session_id": session_id,
-            "selected": chosen,
-        },
-    )
-
-
-from fastapi import HTTPException
-from fastapi.responses import Response
 
 
 _MIME_TO_EXT = {
@@ -139,50 +64,102 @@ def _ext_for(mime: str | None) -> str:
     return _MIME_TO_EXT.get((mime or "").lower(), "mp3")
 
 
-@app.get("/result/{session_id}/{preset_id}", response_class=HTMLResponse)
-async def result(request: Request, session_id: str, preset_id: str):
-    by_id = {p.id: p for p in PRESETS}
-    preset = by_id.get(preset_id)
-    if not preset:
-        raise HTTPException(404, "unknown preset")
+def _provider_labels() -> dict[str, str]:
+    return {name: disp["label"] for name, disp in _PROVIDER_DISPLAY.items()}
 
-    res = SYNTH.get(session_id, preset_id)
-    if res is None:
-        raise HTTPException(404, "unknown session")
+
+async def _voices_context(lang: str, *, refresh: bool = False) -> dict:
+    fetched = await voice_catalog.fetch_all(PROVIDERS, refresh=refresh)
+    groups = voice_catalog.groups_for_language(fetched, _provider_labels(), lang)
+    languages = voice_catalog.available_languages(fetched)
+    return {
+        "groups": groups,
+        "languages": [(code, voice_catalog.LANGUAGE_NAMES.get(code, code)) for code in languages],
+        "current_lang": lang,
+        "provider_display": _PROVIDER_DISPLAY,
+    }
+
+
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
+    ctx = await _voices_context(DEFAULT_LANG)
+    ctx["request"] = request
+    ctx["sample_text"] = _sample_text(DEFAULT_LANG)
+    return templates.TemplateResponse(request, "index.html", ctx)
+
+
+@app.get("/voices", response_class=HTMLResponse)
+async def voices(request: Request, lang: str = DEFAULT_LANG, refresh: bool = False):
+    ctx = await _voices_context(lang, refresh=refresh)
+    ctx["request"] = request
+    return templates.TemplateResponse(request, "_voices.html", ctx)
+
+
+@app.post("/generate", response_class=HTMLResponse)
+async def generate(
+    request: Request,
+    text: Annotated[str, Form()],
+    language: Annotated[str, Form()] = DEFAULT_LANG,
+    selected: Annotated[list[str], Form()] = [],
+):
+    fetched = await voice_catalog.fetch_all(PROVIDERS)
+    items: list[tuple[Selection, object]] = []
+    seen: set[str] = set()
+    for token in selected:
+        try:
+            provider_name, model, voice = parse_token(token)
+        except ValueError:
+            continue
+        provider = PROVIDERS.get(provider_name)
+        if not provider:
+            continue
+        oid = option_id(provider_name, model, voice)
+        if oid in seen:
+            continue
+        seen.add(oid)
+        resolved = voice_catalog.resolve_voice(fetched, provider_name, model, voice)
+        label = resolved.name if resolved else voice
+        sel = Selection(
+            id=oid, label=label, provider=provider_name,
+            model=model, voice=voice, language=language or None,
+        )
+        items.append((sel, provider))
+
+    session_id = SYNTH.start_session(text, items)
+    return templates.TemplateResponse(
+        request, "_card_grid.html",
+        {"session_id": session_id, "selected": [s for s, _ in items]},
+    )
+
+
+@app.get("/result/{session_id}/{option_id}", response_class=HTMLResponse)
+async def result(request: Request, session_id: str, option_id: str):
+    option = SYNTH.get_selection(session_id, option_id)
+    res = SYNTH.get(session_id, option_id)
+    if option is None or res is None:
+        raise HTTPException(404, "unknown session or option")
 
     if res.status == "pending":
         return templates.TemplateResponse(
-            request,
-            "card_loading.html",
-            {"preset": preset, "session_id": session_id},
+            request, "card_loading.html", {"option": option, "session_id": session_id},
         )
     if res.status == "error":
         return templates.TemplateResponse(
-            request,
-            "card_error.html",
-            {
-                "preset": preset,
-                "error_msg": res.error_msg,
-                "latency_ms": res.latency_ms,
-            },
+            request, "card_error.html",
+            {"option": option, "error_msg": res.error_msg, "latency_ms": res.latency_ms},
         )
     return templates.TemplateResponse(
-        request,
-        "card_done.html",
+        request, "card_done.html",
         {
-            "preset": preset,
-            "session_id": session_id,
-            "latency_ms": res.latency_ms,
-            "ext": _ext_for(res.mime),
-            "char_count": res.char_count,
-            "cost_usd": res.cost_usd,
+            "option": option, "session_id": session_id, "latency_ms": res.latency_ms,
+            "ext": _ext_for(res.mime), "char_count": res.char_count, "cost_usd": res.cost_usd,
         },
     )
 
 
-@app.get("/audio/{session_id}/{preset_id}.{ext}")
-async def audio(session_id: str, preset_id: str, ext: str):
-    res = SYNTH.get(session_id, preset_id)
+@app.get("/audio/{session_id}/{option_id}.{ext}")
+async def audio(session_id: str, option_id: str, ext: str):
+    res = SYNTH.get(session_id, option_id)
     if res is None or res.status != "done" or res.audio is None:
         raise HTTPException(404, "audio not available")
     return Response(content=res.audio, media_type=res.mime or "audio/mpeg")
