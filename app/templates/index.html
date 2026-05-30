@@ -130,7 +130,7 @@
     const savedLang = localStorage.getItem("tts_box_lang");
     if (savedLang && savedLang !== LANG.value) {
       LANG.value = savedLang;
-      htmx.ajax("GET", "/voices?lang=" + encodeURIComponent(savedLang), {target: "#voices", swap: "innerHTML"});
+      htmx.ajax("GET", "/voices?language=" + encodeURIComponent(savedLang), {target: "#voices", swap: "innerHTML"});
     }
     LANG.addEventListener("change", () => localStorage.setItem("tts_box_lang", LANG.value));
     document.body.addEventListener("htmx:afterSwap", (e) => {

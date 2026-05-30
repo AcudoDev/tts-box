@@ -29,6 +29,7 @@
           {% for v in voices %}
             <label class="preset" data-name="{{ v.name|lower }}" data-gender="{{ v.gender or '' }}">
               <input type="checkbox" name="selected" value="{{ provider }}|{{ model }}|{{ v.id }}" />
+              <span class="flag" title="{% if v.multilingual %}multilingual{% else %}{{ v.language or '' }}{% endif %}">{{ v | voiceflag }}</span>
               <span class="preset-label">{{ v.name }}</span>
               {% if v.gender %}<span class="tag tag-gender">{{ v.gender }}</span>{% endif %}
               {% if v.multilingual %}<span class="tag tag-ml">multilingual</span>{% endif %}

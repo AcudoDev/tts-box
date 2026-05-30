@@ -362,3 +362,5 @@ label.preset input[type="checkbox"]:disabled {
 .tag-gender { background: #eef; color: #446; }
 .tag-ml { background: #efe; color: #363; }
 .empty-hint { color: #888; font-style: italic; padding: 1rem 0; }
+.flag { margin: 0 .35rem 0 .15rem; font-size: 1rem; line-height: 1; }
+.lang-row select { font-size: .95rem; }

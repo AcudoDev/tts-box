@@ -2,13 +2,16 @@ import pytest
 
 from app.providers.base import TTSProvider, Voice
 from app.voice_catalog import (
+    LANGUAGE_NAMES,
     available_languages,
     clear_cache,
     fetch_all,
+    flag_for,
     groups_for_language,
     option_id,
     parse_token,
     resolve_voice,
+    voice_flag,
     voice_matches_language,
 )
 
@@ -159,3 +162,30 @@ def test_resolve_voice_finds_in_fetched():
     v = resolve_voice(_fetched(), "azure", "neural-standard", "fr-FR-DeniseNeural")
     assert v is not None and v.name == "Denise"
     assert resolve_voice(_fetched(), "azure", "neural-standard", "ghost") is None
+
+
+def test_flag_for_localized_multilingual_and_unknown():
+    assert flag_for("fr") == "🇫🇷"
+    assert flag_for("ja") == "🇯🇵"
+    assert flag_for("en") == "🇬🇧"
+    assert flag_for(None) == "🌐"   # no language → globe
+    assert flag_for("zz") == "🌐"   # unknown code → globe
+
+
+def test_voice_flag_globe_for_multilingual_even_with_language_label():
+    # ElevenLabs voices carry a language label AND multilingual=True; the flag must be
+    # a globe (they aren't tied to one country), not the label's country flag.
+    ml = Voice(id="v", name="Rachel", language="en", multilingual=True)
+    assert voice_flag(ml) == "🌐"
+    loc = Voice(id="v", name="Denise", language="fr", multilingual=False)
+    assert voice_flag(loc) == "🇫🇷"
+
+
+def test_language_names_are_english_and_comprehensive():
+    assert LANGUAGE_NAMES["fr"] == "French"
+    assert LANGUAGE_NAMES["de"] == "German"
+    # Codes providers report but that weren't in the old 15-entry curated set
+    # must now resolve to a real English name (not just the raw code).
+    for code in ["af", "wu", "yu", "iu", "nb", "ps", "or", "sw", "uz"]:
+        name = LANGUAGE_NAMES.get(code)
+        assert name and name != code

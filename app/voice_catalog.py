@@ -82,14 +82,75 @@ async def fetch_all(
     return dict(pairs)
 
 
-# Langues courantes curées (code ISO 639-1 → nom natif). Toujours proposées.
-LANGUAGE_NAMES: dict[str, str] = {
-    "en": "English", "fr": "Français", "es": "Español", "de": "Deutsch",
-    "it": "Italiano", "pt": "Português", "nl": "Nederlands", "pl": "Polski",
-    "ru": "Русский", "tr": "Türkçe", "ar": "العربية", "hi": "हिन्दी",
-    "zh": "中文", "ja": "日本語", "ko": "한국어",
+# Single source of truth: ISO 639-1 code → (English name, representative ISO 3166-1
+# country for the flag, or None). Covers every code our providers report (incl. a few
+# Azure non-standard truncations like "wu"/"yu"). The flag's country is *representative*
+# of the language, not authoritative (e.g. "en" → GB, "pt" → PT, "ar" → SA).
+_LANGUAGES: dict[str, tuple[str, str | None]] = {
+    "af": ("Afrikaans", "ZA"), "am": ("Amharic", "ET"), "ar": ("Arabic", "SA"),
+    "as": ("Assamese", "IN"), "az": ("Azerbaijani", "AZ"), "ba": ("Bashkir", "RU"),
+    "be": ("Belarusian", "BY"), "bg": ("Bulgarian", "BG"), "bn": ("Bengali", "BD"),
+    "bo": ("Tibetan", "CN"), "bs": ("Bosnian", "BA"), "ca": ("Catalan", "ES"),
+    "cs": ("Czech", "CZ"), "cy": ("Welsh", "GB"), "da": ("Danish", "DK"),
+    "de": ("German", "DE"), "dv": ("Divehi", "MV"), "el": ("Greek", "GR"),
+    "en": ("English", "GB"), "eo": ("Esperanto", None), "es": ("Spanish", "ES"),
+    "et": ("Estonian", "EE"), "eu": ("Basque", "ES"), "fa": ("Persian", "IR"),
+    "fi": ("Finnish", "FI"), "fil": ("Filipino", "PH"), "fo": ("Faroese", "FO"),
+    "fr": ("French", "FR"), "ga": ("Irish", "IE"), "gl": ("Galician", "ES"),
+    "gu": ("Gujarati", "IN"), "ha": ("Hausa", "NG"), "he": ("Hebrew", "IL"),
+    "hi": ("Hindi", "IN"), "hr": ("Croatian", "HR"), "hu": ("Hungarian", "HU"),
+    "hy": ("Armenian", "AM"), "id": ("Indonesian", "ID"), "is": ("Icelandic", "IS"),
+    "it": ("Italian", "IT"), "iu": ("Inuktitut", "CA"), "ja": ("Japanese", "JP"),
+    "jv": ("Javanese", "ID"), "ka": ("Georgian", "GE"), "kk": ("Kazakh", "KZ"),
+    "km": ("Khmer", "KH"), "kn": ("Kannada", "IN"), "ko": ("Korean", "KR"),
+    "ku": ("Kurdish", "TR"), "ky": ("Kyrgyz", "KG"), "lb": ("Luxembourgish", "LU"),
+    "lo": ("Lao", "LA"), "lt": ("Lithuanian", "LT"), "lv": ("Latvian", "LV"),
+    "mk": ("Macedonian", "MK"), "ml": ("Malayalam", "IN"), "mn": ("Mongolian", "MN"),
+    "mr": ("Marathi", "IN"), "ms": ("Malay", "MY"), "mt": ("Maltese", "MT"),
+    "my": ("Burmese", "MM"), "nb": ("Norwegian Bokmål", "NO"), "ne": ("Nepali", "NP"),
+    "nl": ("Dutch", "NL"), "nn": ("Norwegian Nynorsk", "NO"), "no": ("Norwegian", "NO"),
+    "or": ("Odia", "IN"), "pa": ("Punjabi", "IN"), "pl": ("Polish", "PL"),
+    "ps": ("Pashto", "AF"), "pt": ("Portuguese", "PT"), "ro": ("Romanian", "RO"),
+    "ru": ("Russian", "RU"), "sd": ("Sindhi", "PK"), "si": ("Sinhala", "LK"),
+    "sk": ("Slovak", "SK"), "sl": ("Slovenian", "SI"), "so": ("Somali", "SO"),
+    "sq": ("Albanian", "AL"), "sr": ("Serbian", "RS"), "su": ("Sundanese", "ID"),
+    "sv": ("Swedish", "SE"), "sw": ("Swahili", "TZ"), "ta": ("Tamil", "IN"),
+    "te": ("Telugu", "IN"), "tg": ("Tajik", "TJ"), "th": ("Thai", "TH"),
+    "ti": ("Tigrinya", "ER"), "tk": ("Turkmen", "TM"), "tl": ("Filipino", "PH"),
+    "tr": ("Turkish", "TR"), "tt": ("Tatar", "RU"), "uk": ("Ukrainian", "UA"),
+    "ur": ("Urdu", "PK"), "uz": ("Uzbek", "UZ"), "vi": ("Vietnamese", "VN"),
+    "wu": ("Wu Chinese", "CN"), "xh": ("Xhosa", "ZA"), "yu": ("Cantonese", "HK"),
+    "zh": ("Chinese", "CN"), "zu": ("Zulu", "ZA"),
 }
-_CURATED = set(LANGUAGE_NAMES)
+
+# Lookup table for display names (comprehensive — every reported code resolves).
+LANGUAGE_NAMES: dict[str, str] = {code: name for code, (name, _) in _LANGUAGES.items()}
+
+# Common languages ALWAYS offered in the selector, even if only multilingual voices
+# (which can speak them) are configured. Kept deliberately separate from LANGUAGE_NAMES:
+# the names map is a lookup table, not the "always show these" set.
+_CURATED = {"en", "fr", "es", "de", "it", "pt", "nl", "pl", "ru", "tr", "ar", "hi", "zh", "ja", "ko"}
+
+
+def _flag_emoji(country: str) -> str:
+    """ISO 3166-1 alpha-2 country code → flag emoji (regional indicator pair)."""
+    return "".join(chr(0x1F1E6 + ord(c) - ord("A")) for c in country.upper())
+
+
+def flag_for(language: str | None) -> str:
+    """Flag emoji for a language code. None or unknown → globe."""
+    if not language:
+        return "🌐"
+    country = (_LANGUAGES.get(language) or (None, None))[1]
+    return _flag_emoji(country) if country else "🌐"
+
+
+def voice_flag(voice: Voice) -> str:
+    """Flag for a voice: a globe for multilingual voices (they aren't tied to one
+    country), otherwise the flag of the voice's declared language."""
+    if voice.multilingual:
+        return "🌐"
+    return flag_for(voice.language)
 
 
 def available_languages(fetched: dict[str, dict[str, list[Voice]]]) -> list[str]:

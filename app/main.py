@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parent
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 templates = Jinja2Templates(directory=ROOT / "templates")
+templates.env.filters["voiceflag"] = voice_catalog.voice_flag
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -82,7 +83,7 @@ async def _voices_context(lang: str, *, refresh: bool = False) -> dict:
     languages = voice_catalog.available_languages(fetched)
     return {
         "groups": groups,
-        "languages": [(code, voice_catalog.LANGUAGE_NAMES.get(code, code)) for code in languages],
+        "languages": [(code, voice_catalog.LANGUAGE_NAMES.get(code, code.upper())) for code in languages],
         "current_lang": lang,
         "provider_display": _PROVIDER_DISPLAY,
     }
@@ -97,8 +98,10 @@ async def index(request: Request):
 
 
 @app.get("/voices", response_class=HTMLResponse)
-async def voices(request: Request, lang: str = DEFAULT_LANG, refresh: bool = False):
-    ctx = await _voices_context(lang, refresh=refresh)
+async def voices(request: Request, language: str = DEFAULT_LANG, refresh: bool = False):
+    # Query param is "language" to match the <select name="language"> that triggers it
+    # (and the POST /generate form field), so switching language in the UI actually filters.
+    ctx = await _voices_context(language, refresh=refresh)
     ctx["request"] = request
     return templates.TemplateResponse(request, "_voices.html", ctx)
 
