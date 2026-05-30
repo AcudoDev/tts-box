@@ -9,6 +9,7 @@ class Voice:
     name: str
     language: str | None = None
     gender: str | None = None
+    multilingual: bool = False
 
 
 _REGISTRY: dict[str, type["TTSProvider"]] = {}
@@ -17,6 +18,7 @@ _REGISTRY: dict[str, type["TTSProvider"]] = {}
 class TTSProvider(ABC):
     name: str
     api_key_env: str
+    voices_depend_on_model: bool = False  # True si list_voices dépend du modèle (OpenRouter)
 
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
