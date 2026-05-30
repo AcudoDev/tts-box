@@ -95,7 +95,11 @@
         {% include "_voices.html" %}
       </div>
 
-      <button type="submit" class="generate-btn">Generate (<span id="count-cta">0</span>)</button>
+      <div class="generate-bar">
+        <button type="submit" class="generate-btn" id="generate-btn" disabled>
+          Generate (<span id="count-cta">0</span>)
+        </button>
+      </div>
     </form>
 
     <section id="results"></section>
@@ -105,15 +109,24 @@
     const form = document.getElementById("gen-form");
     const LANG = document.getElementById("lang-select");
 
+    const generateBtn = document.getElementById("generate-btn");
+
     function updateCounts() {
       const checked = form.querySelectorAll('input[name="selected"]:checked').length;
       document.getElementById("count").textContent = checked;
       document.getElementById("count-cta").textContent = checked;
+      // Sticky Generate bar: dim + disable when nothing is selected (N=0).
+      generateBtn.disabled = checked === 0;
       form.querySelectorAll('.provider-group').forEach(group => {
         const sel = group.querySelectorAll('input[name="selected"]:checked').length;
         const out = group.querySelector('.provider-checked');
         if (out) out.textContent = sel;
         group.classList.toggle('has-selection', sel > 0);
+      });
+      // Checked-row tint fallback for engines without :has().
+      form.querySelectorAll('#voices .preset').forEach(label => {
+        const cb = label.querySelector('input[name="selected"]');
+        label.classList.toggle('is-checked', !!cb && cb.checked);
       });
     }
 
@@ -181,6 +194,25 @@
     document.body.addEventListener("htmx:afterSwap", (e) => {
       if (e.target.id === "voices") { applyFilters(); applyFavorites(); }
     });
+
+    // While /generate is in flight: mark the button busy ("Generating N…") and
+    // disable it so a second tap can't fire a duplicate session. Restore after.
+    let prevCta = "0";
+    form.addEventListener("htmx:beforeRequest", (e) => {
+      if (e.target !== form) return; // ignore card/voices sub-requests
+      const n = form.querySelectorAll('input[name="selected"]:checked').length;
+      prevCta = document.getElementById("count-cta").textContent;
+      generateBtn.setAttribute("aria-busy", "true");
+      generateBtn.disabled = true;
+      generateBtn.textContent = "Generating " + n + "…";
+    });
+    function endGenerate() {
+      generateBtn.removeAttribute("aria-busy");
+      generateBtn.innerHTML = 'Generate (<span id="count-cta">' + prevCta + "</span>)";
+      updateCounts();
+    }
+    form.addEventListener("htmx:afterRequest", (e) => { if (e.target === form) endGenerate(); });
+    form.addEventListener("htmx:responseError", (e) => { if (e.target === form) endGenerate(); });
 
     document.querySelector("textarea").addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); form.requestSubmit(); }
