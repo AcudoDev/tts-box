@@ -6,12 +6,12 @@ from app.voice_catalog import (
     available_languages,
     clear_cache,
     fetch_all,
+    flag_country,
     flag_for,
     groups_for_language,
     option_id,
     parse_token,
     resolve_voice,
-    voice_flag,
     voice_matches_language,
 )
 
@@ -172,13 +172,13 @@ def test_flag_for_localized_multilingual_and_unknown():
     assert flag_for("zz") == "🌐"   # unknown code → globe
 
 
-def test_voice_flag_globe_for_multilingual_even_with_language_label():
-    # ElevenLabs voices carry a language label AND multilingual=True; the flag must be
-    # a globe (they aren't tied to one country), not the label's country flag.
-    ml = Voice(id="v", name="Rachel", language="en", multilingual=True)
-    assert voice_flag(ml) == "🌐"
-    loc = Voice(id="v", name="Denise", language="fr", multilingual=False)
-    assert voice_flag(loc) == "🇫🇷"
+def test_flag_country_codes():
+    # Lowercase ISO 3166-1 codes for the flag-icons `fi-XX` class.
+    assert flag_country("fr") == "fr"
+    assert flag_country("en") == "gb"   # English → GB (representative)
+    assert flag_country("ja") == "jp"
+    assert flag_country(None) is None
+    assert flag_country("zz") is None   # unknown language → no flag
 
 
 def test_language_names_are_english_and_comprehensive():

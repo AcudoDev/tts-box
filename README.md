@@ -69,3 +69,7 @@ uv run ruff check .    # lint
 ## Stack
 
 FastAPI · HTMX · Jinja2 · httpx · pytest · uv. No JS build step.
+
+## Credits
+
+Country flags by [flag-icons](https://github.com/lipis/flag-icons) (MIT).

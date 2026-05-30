@@ -21,7 +21,7 @@ ROOT = Path(__file__).resolve().parent
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 templates = Jinja2Templates(directory=ROOT / "templates")
-templates.env.filters["voiceflag"] = voice_catalog.voice_flag
+templates.env.filters["flag_country"] = voice_catalog.flag_country
 
 
 @app.get("/favicon.ico", include_in_schema=False)

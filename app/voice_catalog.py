@@ -145,12 +145,13 @@ def flag_for(language: str | None) -> str:
     return _flag_emoji(country) if country else "🌐"
 
 
-def voice_flag(voice: Voice) -> str:
-    """Flag for a voice: a globe for multilingual voices (they aren't tied to one
-    country), otherwise the flag of the voice's declared language."""
-    if voice.multilingual:
-        return "🌐"
-    return flag_for(voice.language)
+def flag_country(language: str | None) -> str | None:
+    """Lowercase ISO 3166-1 country code for a language's flag (consumed by the
+    flag-icons CSS class `fi-XX`). None when there's no representative country."""
+    if not language:
+        return None
+    country = (_LANGUAGES.get(language) or (None, None))[1]
+    return country.lower() if country else None
 
 
 def available_languages(fetched: dict[str, dict[str, list[Voice]]]) -> list[str]:

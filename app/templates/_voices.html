@@ -29,10 +29,15 @@
           {% for v in voices %}
             <label class="preset" data-name="{{ v.name|lower }}" data-gender="{{ v.gender or '' }}">
               <input type="checkbox" name="selected" value="{{ provider }}|{{ model }}|{{ v.id }}" />
-              <span class="flag" title="{% if v.multilingual %}multilingual{% else %}{{ v.language or '' }}{% endif %}">{{ v | voiceflag }}</span>
+              {% if v.multilingual %}
+                <span class="flag flag-globe" title="multilingual">🌐</span>
+              {% else %}
+                {% set cc = v.language | flag_country %}
+                {% if cc %}<span class="fi fi-{{ cc }} flag" title="{{ v.language }}"></span>
+                {% else %}<span class="flag flag-globe" title="{{ v.language or '' }}">🌐</span>{% endif %}
+              {% endif %}
               <span class="preset-label">{{ v.name }}</span>
               {% if v.gender %}<span class="tag tag-gender">{{ v.gender }}</span>{% endif %}
-              {% if v.multilingual %}<span class="tag tag-ml">multilingual</span>{% endif %}
             </label>
           {% endfor %}
         </div>

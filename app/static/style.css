@@ -362,5 +362,7 @@ label.preset input[type="checkbox"]:disabled {
 .tag-gender { background: #eef; color: #446; }
 .tag-ml { background: #efe; color: #363; }
 .empty-hint { color: #888; font-style: italic; padding: 1rem 0; }
-.flag { margin: 0 .35rem 0 .15rem; font-size: 1rem; line-height: 1; }
+.flag { margin: 0 .4rem 0 .15rem; flex: 0 0 auto; }
+.fi.flag { width: 1.3em; height: .95em; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, .1); vertical-align: -.08em; }
+.flag-globe { font-size: 1rem; line-height: 1; }
 .lang-row select { font-size: .95rem; }
