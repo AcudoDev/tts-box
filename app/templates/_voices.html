@@ -5,19 +5,32 @@
     <option value="female">Female</option>
     <option value="male">Male</option>
   </select>
+  <span class="voices-shown" id="voices-shown" aria-live="polite"></span>
 </div>
 
 {% for provider, models in groups %}
   {% set display = provider_display.get(provider, {"label": provider}) %}
   {% set all_voices = [] %}
   {% for _, voices in models %}{% set _ = all_voices.extend(voices) %}{% endfor %}
-  <fieldset class="provider-group" data-provider="{{ provider }}">
-    <legend>
-      <span class="provider-dot"></span>
+  {# Collapse providers with > 150 voices (Azure) by default, esp. on mobile.
+     <details> keeps its checkboxes in the DOM while collapsed, so a checked
+     voice in a closed group is still submitted with the form. #}
+  <details class="provider-group" data-provider="{{ provider }}"
+           data-total="{{ all_voices|length }}"
+           {% if all_voices|length <= 150 %}open{% endif %}>
+    <summary>
+      <span class="provider-dot" aria-hidden="true"></span>
       <span class="provider-name">{{ display.label }}</span>
-      <span class="provider-count">(<span class="provider-checked">0</span>/{{ all_voices|length }})</span>
-      <button type="button" class="provider-toggle link-btn" data-toggle-provider="{{ provider }}">all</button>
-    </legend>
+      <span class="provider-count">(<span class="provider-checked">0</span>/<span class="provider-shown">{{ all_voices|length }}</span>)</span>
+      <button type="button" class="provider-toggle link-btn"
+              data-toggle-provider="{{ provider }}"
+              aria-label="Toggle all visible {{ display.label }} voices">all</button>
+      <svg class="provider-chevron" viewBox="0 0 24 24" aria-hidden="true"
+           fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </summary>
     {% for model, voices in models %}
       <div class="model-group">
         <div class="model-header">
@@ -42,7 +55,9 @@
         </div>
       </div>
     {% endfor %}
-  </fieldset>
+  </details>
 {% else %}
   <p class="empty-hint">No voices available for this language with your configured providers.</p>
 {% endfor %}
+
+<p class="voices-empty" id="voices-empty" hidden>No voices match your filters.</p>

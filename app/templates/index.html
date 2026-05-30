@@ -102,7 +102,11 @@
       </div>
     </form>
 
-    <section id="results"></section>
+    <div id="results-head" class="results-head" hidden tabindex="-1">
+      <h2 class="results-title" id="results-title"></h2>
+      <p class="results-status" id="results-status" aria-live="polite"></p>
+    </div>
+    <section id="results" role="region" aria-label="Comparison results"></section>
   </main>
 
   <script>
@@ -144,15 +148,42 @@
     }
 
     // Recherche + filtre genre (sur le bloc #voices courant).
+    // Hide rows that don't match; then hide any .model-group / provider <details>
+    // that ends up with zero visible rows, surface a "No voices match…" message,
+    // and refresh the "Showing N of M" toolbar count + per-provider shown counts.
     function applyFilters() {
       const q = (document.getElementById("voice-search")?.value || "").toLowerCase();
       const g = document.getElementById("gender-filter")?.value || "";
-      form.querySelectorAll('#voices .preset').forEach(label => {
+      const rows = form.querySelectorAll('#voices .preset');
+      let shown = 0;
+      const total = rows.length;
+      rows.forEach(label => {
         const name = label.dataset.name || "";
         const gender = label.dataset.gender || "";
         const ok = name.includes(q) && (!g || gender === g);
-        label.style.display = ok ? "" : "none";
+        label.hidden = !ok;
+        if (ok) shown++;
       });
+
+      // Collapse empty model sub-groups.
+      form.querySelectorAll('#voices .model-group').forEach(mg => {
+        const any = mg.querySelector('.preset:not([hidden])');
+        mg.hidden = !any;
+      });
+
+      // Hide whole providers with no visible rows; refresh their shown count.
+      form.querySelectorAll('#voices .provider-group').forEach(group => {
+        const visible = group.querySelectorAll('.preset:not([hidden])').length;
+        group.hidden = visible === 0;
+        const out = group.querySelector('.provider-shown');
+        if (out) out.textContent = visible;
+      });
+
+      // "Showing N of M" + global empty state.
+      const shownOut = document.getElementById("voices-shown");
+      if (shownOut) shownOut.textContent = "Showing " + shown + " of " + total;
+      const emptyOut = document.getElementById("voices-empty");
+      if (emptyOut) emptyOut.hidden = !(total > 0 && shown === 0);
     }
 
     // Délégation : marche aussi après un swap HTMX de #voices.
@@ -163,16 +194,36 @@
     document.addEventListener("change", (e) => {
       if (e.target.id === "gender-filter") applyFilters();
     });
+    // A checkbox is "visible" when it passes the current search/gender filter,
+    // i.e. neither its row nor its model-group / provider-group is [hidden].
+    // (A collapsed <details> is NOT hidden — those voices still count and submit.)
+    function isFilterVisible(cb) {
+      const row = cb.closest('.preset');
+      if (!row || row.hidden) return false;
+      const mg = cb.closest('.model-group');
+      if (mg && mg.hidden) return false;
+      const pg = cb.closest('.provider-group');
+      if (pg && pg.hidden) return false;
+      return true;
+    }
+    function visibleInputs(root) {
+      return Array.from((root || form).querySelectorAll('#voices input[name="selected"]'))
+        .filter(isFilterVisible);
+    }
     form.addEventListener("click", (e) => {
       if (e.target.matches('[data-toggle-all]')) {
+        // Scope Check-all / Uncheck-all to the FILTERED (currently-visible) set only.
         const t = e.target.dataset.toggleAll === "true";
-        form.querySelectorAll('#voices input[name="selected"]').forEach(cb => { cb.checked = t; });
+        visibleInputs().forEach(cb => { cb.checked = t; });
         updateCounts();
       }
       if (e.target.matches('[data-toggle-provider]')) {
+        // The button lives inside <summary>; stop the click from toggling the
+        // <details> open/closed. Act on this provider's visible inputs only.
+        e.preventDefault();
         const group = e.target.closest('.provider-group');
-        const boxes = group.querySelectorAll('input[name="selected"]');
-        const allChecked = Array.from(boxes).every(cb => cb.checked);
+        const boxes = visibleInputs(group);
+        const allChecked = boxes.length > 0 && boxes.every(cb => cb.checked);
         boxes.forEach(cb => { cb.checked = !allChecked; });
         updateCounts();
       }
@@ -191,8 +242,39 @@
       htmx.ajax("GET", "/voices?language=" + encodeURIComponent(savedLang), {target: "#voices", swap: "innerHTML"});
     }
     LANG.addEventListener("change", () => localStorage.setItem("tts_box_lang", LANG.value));
+
+    // Results separation: a heading that announces "Comparing N voices" and a live
+    // "X done · Y failed" tally. The card grid (#results) is innerHTML-swapped by the
+    // form POST; each card then replaces itself (done/error) and its swap bubbles here.
+    const resultsHead = document.getElementById("results-head");
+    const resultsTitle = document.getElementById("results-title");
+    const resultsStatus = document.getElementById("results-status");
+    function updateResultsHead() {
+      const root = document.getElementById("results");
+      const total = root.querySelectorAll('.card').length;
+      if (total === 0) { resultsHead.hidden = true; return; }
+      const done = root.querySelectorAll('.card.done').length;
+      const failed = root.querySelectorAll('.card.error').length;
+      resultsHead.hidden = false;
+      resultsTitle.textContent = "Comparing " + total + (total === 1 ? " voice" : " voices");
+      resultsStatus.textContent = done + " done · " + failed + " failed";
+    }
+
+    // Set when the form POST starts; consumed by the first #results swap so we
+    // reveal + scroll the heading exactly once (card self-swaps also bubble here).
+    let pendingResultsScroll = false;
     document.body.addEventListener("htmx:afterSwap", (e) => {
       if (e.target.id === "voices") { applyFilters(); applyFavorites(); }
+      // Both the grid swap (form POST) and each card's self-swap (done/error,
+      // outerHTML → fires on the #results parent) land here. Always re-tally;
+      // scroll only on the first swap of a generation.
+      if (e.target.id === "results" || (e.target.closest && e.target.closest("#results"))) {
+        updateResultsHead();
+        if (pendingResultsScroll) {
+          pendingResultsScroll = false;
+          resultsHead.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
     });
 
     // While /generate is in flight: mark the button busy ("Generating N…") and
@@ -200,6 +282,7 @@
     let prevCta = "0";
     form.addEventListener("htmx:beforeRequest", (e) => {
       if (e.target !== form) return; // ignore card/voices sub-requests
+      pendingResultsScroll = true; // first #results swap will scroll the heading into view
       const n = form.querySelectorAll('input[name="selected"]:checked').length;
       prevCta = document.getElementById("count-cta").textContent;
       generateBtn.setAttribute("aria-busy", "true");
@@ -244,6 +327,7 @@
     applyTheme(document.documentElement.dataset.theme || "system");
 
     applyFavorites();
+    applyFilters();
     updateCounts();
   </script>
 </body>

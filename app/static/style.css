@@ -343,7 +343,7 @@ textarea:focus {
 }
 .link-btn:hover { text-decoration: underline; }
 
-/* ── Provider groups ────────────────────────────────── */
+/* ── Provider groups (native <details>/<summary>, collapsible, zero JS) ── */
 .provider-group {
   margin: 0 0 0.75rem;
   border: 1px solid var(--border);
@@ -360,15 +360,24 @@ textarea:focus {
   opacity: 0.55;
 }
 
-.provider-group legend {
+/* <summary> is the clickable header. Strip the native disclosure triangle
+   (both the modern list marker and the legacy WebKit pseudo) and lay the
+   dot · name · count · "all" · chevron out in a row. */
+.provider-group > summary {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0 0.4rem;
   font-weight: 600;
   font-size: 0.95rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
 }
+.provider-group > summary::-webkit-details-marker { display: none; }
+.provider-group > summary::marker { content: ""; }
 .provider-dot {
+  flex: 0 0 auto;
   width: 9px;
   height: 9px;
   border-radius: 50%;
@@ -388,6 +397,16 @@ textarea:focus {
   color: var(--muted) !important;
 }
 .provider-toggle:hover { color: var(--provider-color) !important; }
+/* Chevron pinned right; rotates when the group is open. */
+.provider-chevron {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  color: var(--muted);
+  transition: transform var(--motion) ease;
+}
+.provider-group[open] > summary .provider-chevron { transform: rotate(180deg); }
 
 /* Single column for voices (per-model). Models become sub-sections. */
 .model-group {
@@ -543,13 +562,36 @@ label.preset input[type="checkbox"]:disabled {
   cursor: progress;
 }
 
+/* ── Results separation: heading + live tally above the card grid ──── */
+.results-head {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 2px solid var(--border);
+  scroll-margin-top: 1rem;
+}
+.results-head:focus { outline: none; }
+.results-title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.01em;
+}
+.results-status {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Results grid (mobile-first: 1 col → 2 @600 → auto-fill @960) ── */
 #results {
-  margin-top: 2rem;
+  margin-top: 1rem;
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
 }
+/* When the heading is present it owns the top margin; the grid sits under it. */
+.results-head:not([hidden]) + #results { margin-top: 1rem; }
 
 .card {
   background: var(--surface);
@@ -635,6 +677,16 @@ label.preset input[type="checkbox"]:disabled {
 }
 .voices-toolbar input[type="search"] { flex: 1; padding: .4rem .6rem; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--fg); }
 .voices-toolbar select { border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--fg); padding: .4rem .5rem; }
+/* "Showing N of M" live count. Pushed to its own line on phones; inline @600. */
+.voices-shown {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  align-self: center;
+}
+/* Global empty state when the filter hides every voice across all providers. */
+.voices-empty { color: var(--muted); font-style: italic; padding: 1rem 0; }
 .tag { font-size: .68rem; padding: .05rem .45rem; border-radius: var(--radius-pill); vertical-align: middle; white-space: nowrap; }
 .tag-gender { background: var(--accent-soft); color: var(--accent); }
 .empty-hint { color: var(--muted); font-style: italic; padding: 1rem 0; }
@@ -650,6 +702,8 @@ label.preset input[type="checkbox"]:disabled {
 @media (min-width: 600px) {
   :root { --gutter: var(--space-5); } /* 1.5rem */
   #results { grid-template-columns: repeat(2, 1fr); }
+  /* Enough room to sit the count inline at the end of the toolbar row. */
+  .voices-shown { flex-basis: auto; margin-left: auto; }
 }
 
 @media (min-width: 960px) {
