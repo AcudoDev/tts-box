@@ -60,6 +60,9 @@ class AzureSpeechProvider(TTSProvider):
 
     name = "azure"
     api_key_env = "AZURE_SPEECH_KEY"
+    # list_voices() returns a different set per logical model (standard / hd /
+    # multilingual), so fetch_all must call it for each model instead of reusing one.
+    voices_depend_on_model = True
 
     def __init__(self, api_key: str) -> None:
         super().__init__(api_key=api_key)

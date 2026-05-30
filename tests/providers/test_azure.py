@@ -2,6 +2,7 @@ import httpx
 import pytest
 import respx
 
+from app import voice_catalog
 from app.providers.azure import AzureSpeechProvider, _build_ssml, _locale_from_voice
 
 
@@ -143,3 +144,29 @@ async def test_list_voices_parses(provider):
     assert voices[0].language == "fr"
     assert voices[0].gender == "male"
     assert voices[1].language == "en"
+
+
+def test_azure_declares_model_dependent_voices():
+    # Azure's list_voices() filters by model bucket (standard / hd / multilingual),
+    # so fetch_all must NOT reuse one model's list for the others. The provider must
+    # declare this, otherwise the HD and multilingual voices silently vanish.
+    assert AzureSpeechProvider.voices_depend_on_model is True
+
+
+@respx.mock
+async def test_fetch_all_preserves_azure_per_model_buckets(az):
+    # Regression: with voices_depend_on_model=False, fetch_all called list_voices once
+    # ("neural-standard") and reused it for all 3 buckets, dropping HD + multilingual.
+    voice_catalog.clear_cache()
+    respx.get(
+        "https://westeurope.tts.speech.microsoft.com/cognitiveservices/voices/list"
+    ).mock(return_value=httpx.Response(200, json=_VOICE_LIST))
+    fetched = await voice_catalog.fetch_all({"azure": az})
+    voice_catalog.clear_cache()
+
+    std = {v.id for v in fetched["azure"]["neural-standard"]}
+    hd = {v.id for v in fetched["azure"]["neural-hd"]}
+    ml = {v.id for v in fetched["azure"]["neural-multilingual"]}
+    assert std == {"fr-FR-DeniseNeural", "de-DE-KatjaNeural"}
+    assert hd == {"fr-FR-Remy:DragonHDLatestNeural"}
+    assert ml == {"fr-FR-VivienneMultilingualNeural"}
