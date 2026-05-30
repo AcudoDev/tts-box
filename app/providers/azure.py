@@ -16,8 +16,31 @@ def _endpoint(region: str) -> str:
     return f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1"
 
 
+def _locale_from_voice(voice_id: str) -> str | None:
+    """Azure voiceId = '<lang>-<REGION>-<Name...>' → '<lang>-<REGION>'."""
+    parts = voice_id.split("-", 2)
+    if len(parts) >= 2 and len(parts[0]) == 2 and len(parts[1]) >= 2:
+        return f"{parts[0]}-{parts[1]}"
+    return None
+
+
+def _model_of_voice(short_name: str) -> str:
+    """Bucket an Azure ShortName into one of our logical models.
+
+    HD/Dragon voices carry a ':Dragon...' suffix (DragonHDLatest/Omni/Flash);
+    multilingual voices end in 'MultilingualNeural'; everything else is standard.
+    """
+    if "DragonHD" in short_name:
+        return "neural-hd"
+    if short_name.endswith("MultilingualNeural"):
+        return "neural-multilingual"
+    return "neural-standard"
+
+
 def _build_ssml(text: str, voice_id: str, language: str | None) -> str:
-    lang = language or "fr-FR"
+    # Prefer the full locale derived from the voiceId (e.g. "fr-FR"); fall back to
+    # the caller-provided language, then a neutral default.
+    lang = _locale_from_voice(voice_id) or language or "en-US"
     # Some HD voices use a colon in their name (e.g. "fr-FR-Vivienne:DragonHDLatestNeural"),
     # which is valid as an attribute value but must be XML-escaped.
     voice_attr = saxutils.quoteattr(voice_id)
@@ -53,11 +76,15 @@ class AzureSpeechProvider(TTSProvider):
             data = r.json()
         out: list[Voice] = []
         for v in data:
+            short = v["ShortName"]
+            if _model_of_voice(short) != model:
+                continue
             out.append(Voice(
-                id=v["ShortName"],
-                name=v.get("DisplayName", v["ShortName"]),
+                id=short,
+                name=v.get("DisplayName", short),
                 language=(v.get("Locale") or "")[:2] or None,
                 gender=(v.get("Gender") or "").lower() or None,
+                multilingual=(model == "neural-multilingual"),
             ))
         return out
 
