@@ -1,0 +1,43 @@
+<div class="voices-toolbar">
+  <input type="search" id="voice-search" placeholder="Search a voice…" autocomplete="off" />
+  <select id="gender-filter">
+    <option value="">All genders</option>
+    <option value="female">Female</option>
+    <option value="male">Male</option>
+  </select>
+</div>
+
+{% for provider, models in groups %}
+  {% set display = provider_display.get(provider, {"label": provider, "color": "#888"}) %}
+  {% set all_voices = [] %}
+  {% for _, voices in models %}{% set _ = all_voices.extend(voices) %}{% endfor %}
+  <fieldset class="provider-group" data-provider="{{ provider }}"
+            style="--provider-color: {{ display.color }}">
+    <legend>
+      <span class="provider-dot"></span>
+      <span class="provider-name">{{ display.label }}</span>
+      <span class="provider-count">(<span class="provider-checked">0</span>/{{ all_voices|length }})</span>
+      <button type="button" class="provider-toggle link-btn" data-toggle-provider="{{ provider }}">all</button>
+    </legend>
+    {% for model, voices in models %}
+      <div class="model-group">
+        <div class="model-header">
+          <span class="model-name">{{ model }}</span>
+          <span class="model-count">{{ voices|length }} voices</span>
+        </div>
+        <div class="model-voices">
+          {% for v in voices %}
+            <label class="preset" data-name="{{ v.name|lower }}" data-gender="{{ v.gender or '' }}">
+              <input type="checkbox" name="selected" value="{{ provider }}|{{ model }}|{{ v.id }}" />
+              <span class="preset-label">{{ v.name }}</span>
+              {% if v.gender %}<span class="tag tag-gender">{{ v.gender }}</span>{% endif %}
+              {% if v.multilingual %}<span class="tag tag-ml">multilingual</span>{% endif %}
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </fieldset>
+{% else %}
+  <p class="empty-hint">No voices available for this language with your configured providers.</p>
+{% endfor %}

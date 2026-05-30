@@ -1,11 +1,11 @@
 <div class="card loading"
-     id="card-{{ preset.id }}"
-     hx-get="/result/{{ session_id }}/{{ preset.id }}"
+     id="card-{{ option.id }}"
+     hx-get="/result/{{ session_id }}/{{ option.id }}"
      hx-trigger="load delay:500ms"
      hx-swap="outerHTML">
   <div class="card-header">
-    <span class="card-voice">{{ preset.label }}</span>
-    <span class="card-meta">{{ preset.provider }} · {{ preset.model }}</span>
+    <span class="card-voice">{{ option.label }}</span>
+    <span class="card-meta">{{ option.provider }} · {{ option.model }}{% if option.language %} · {{ option.language }}{% endif %}</span>
   </div>
-  <div class="card-body">⏳ Génération en cours…</div>
+  <div class="card-body">⏳ Generating…</div>
 </div>

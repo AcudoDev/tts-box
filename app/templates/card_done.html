@@ -1,22 +1,21 @@
-<div class="card done" id="card-{{ preset.id }}">
+<div class="card done" id="card-{{ option.id }}">
   <div class="card-header">
-    <span class="card-voice">{{ preset.label }}</span>
-    <span class="card-meta">{{ preset.provider }} · {{ preset.model }}</span>
+    <span class="card-voice">{{ option.label }}</span>
+    <span class="card-meta">{{ option.provider }} · {{ option.model }}{% if option.language %} · {{ option.language }}{% endif %}</span>
   </div>
-  <audio src="/audio/{{ session_id }}/{{ preset.id }}.{{ ext }}" controls preload="auto"></audio>
+  <audio src="/audio/{{ session_id }}/{{ option.id }}.{{ ext }}" controls preload="auto"></audio>
   <div class="card-footer">
     <span class="latency">{{ latency_ms }} ms</span>
     {% if cost_usd is not none %}
       {% if cost_usd > 0 and cost_usd < 0.0001 %}
-        <span class="cost" title="{{ char_count }} chars · estimation">&lt;$0.0001</span>
+        <span class="cost" title="{{ char_count }} chars · estimate">&lt;$0.0001</span>
       {% else %}
-        <span class="cost" title="{{ char_count }} chars · estimation">${{ "%.4f"|format(cost_usd) }}</span>
+        <span class="cost" title="{{ char_count }} chars · estimate">${{ "%.4f"|format(cost_usd) }}</span>
       {% endif %}
     {% else %}
-      <span class="cost muted" title="Tarif inconnu pour ce modèle">— $</span>
+      <span class="cost muted" title="Unknown price for this model">— $</span>
     {% endif %}
-    <a class="download"
-       href="/audio/{{ session_id }}/{{ preset.id }}.{{ ext }}"
-       download="{{ preset.id }}.{{ ext }}">↓ DL</a>
+    <a class="download" href="/audio/{{ session_id }}/{{ option.id }}.{{ ext }}"
+       download="{{ option.id }}.{{ ext }}">↓ DL</a>
   </div>
 </div>
