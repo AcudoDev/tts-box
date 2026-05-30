@@ -21,7 +21,7 @@ class OpenAIProvider(TTSProvider):
         return list(_MODELS)
 
     async def list_voices(self, model: str) -> list[Voice]:
-        return [Voice(id=v, name=v) for v in _VOICES]
+        return [Voice(id=v, name=v, multilingual=True) for v in _VOICES]
 
     async def synthesize(
         self, text: str, model: str, voice_id: str, language: str | None = None

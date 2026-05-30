@@ -41,6 +41,13 @@ async def test_list_voices_returns_static(provider):
     assert {"alloy", "nova", "shimmer"} <= names
 
 
+async def test_list_voices_are_multilingual():
+    from app.providers.openai import OpenAIProvider
+    voices = await OpenAIProvider(api_key="k").list_voices("tts-1")
+    assert len(voices) == 11
+    assert all(v.multilingual for v in voices)
+
+
 @respx.mock
 async def test_synthesize_http_error(provider):
     respx.post("https://api.openai.com/v1/audio/speech").mock(

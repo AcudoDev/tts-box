@@ -51,6 +51,7 @@ async def test_list_voices_parses_response(provider):
     assert voices[0].name == "Rachel"
     assert voices[0].language == "en"
     assert voices[1].language is None
+    assert voices[0].multilingual is True  # ElevenLabs = comptes multilingues
 
 
 def test_list_models_returns_known_models(provider):
