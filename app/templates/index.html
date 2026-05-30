@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <title>TTS Box</title>
@@ -13,71 +13,44 @@
   </header>
 
   <main>
-    <form id="gen-form"
-          hx-post="/generate"
-          hx-target="#results"
-          hx-swap="innerHTML">
-      <label class="field-label" for="text-input">Texte à synthétiser</label>
+    <form id="gen-form" hx-post="/generate" hx-target="#results" hx-swap="innerHTML">
+      <div class="lang-row">
+        <label for="lang-select">Language</label>
+        <select id="lang-select" name="language"
+                hx-get="/voices" hx-target="#voices" hx-swap="innerHTML"
+                hx-trigger="change">
+          {% for code, name in languages %}
+            <option value="{{ code }}" {% if code == current_lang %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+        <button type="button" class="link-btn" id="refresh-voices"
+                hx-get="/voices?refresh=true" hx-target="#voices" hx-swap="innerHTML"
+                hx-include="#lang-select">↻ refresh voices</button>
+      </div>
+
+      <label class="field-label" for="text-input">Text to synthesize</label>
       <textarea id="text-input" name="text" required autofocus rows="4"
-                placeholder="Tape ou colle ton texte ici…">Bonjour, voici un texte de test pour comparer plusieurs voix de synthèse vocale. Évaluez maintenant la prosodie, le rythme et la qualité entre nos fournisseurs.</textarea>
+                placeholder="Type or paste your text here…">{{ sample_text }}</textarea>
 
       <div class="voices-header">
         <div class="voices-title">
-          <h2>Voix à comparer</h2>
-          <span class="voices-summary"><span id="count">0</span> sélectionnée<span id="count-plural">s</span></span>
+          <h2>Voices to compare</h2>
+          <span class="voices-summary"><span id="count">0</span> selected</span>
         </div>
         <div class="voices-actions">
-          <button type="button" class="link-btn" data-toggle-all="true">Tout cocher</button>
+          <button type="button" class="link-btn" data-toggle-all="true">Check all</button>
           <span class="sep">·</span>
-          <button type="button" class="link-btn" data-toggle-all="false">Tout décocher</button>
+          <button type="button" class="link-btn" data-toggle-all="false">Uncheck all</button>
+          <span class="sep">·</span>
+          <button type="button" class="link-btn" id="save-fav">★ Save selection</button>
         </div>
       </div>
 
-      {% for provider, models in groups %}
-        {% set display = provider_display.get(provider, {"label": provider, "color": "#888"}) %}
-        {% set all_presets = [] %}
-        {% for _, presets in models %}{% set _ = all_presets.extend(presets) %}{% endfor %}
-        {% set all_disabled = all_presets|selectattr("disabled_reason")|list|length == all_presets|length %}
-        <fieldset class="provider-group {% if all_disabled %}provider-disabled{% endif %}"
-                  data-provider="{{ provider }}"
-                  style="--provider-color: {{ display.color }}">
-          <legend>
-            <span class="provider-dot"></span>
-            <span class="provider-name">{{ display.label }}</span>
-            <span class="provider-count">(<span class="provider-checked">0</span>/{{ all_presets|length }})</span>
-            {% if not all_disabled %}
-              <button type="button" class="provider-toggle link-btn" data-toggle-provider="{{ provider }}">tout</button>
-            {% endif %}
-          </legend>
+      <div id="voices">
+        {% include "_voices.html" %}
+      </div>
 
-          {% for model, presets in models %}
-            <div class="model-group">
-              <div class="model-header">
-                <span class="model-name">{{ model }}</span>
-                <span class="model-count">{{ presets|length }} voix</span>
-              </div>
-              <div class="model-voices">
-                {% for p in presets %}
-                  <label class="preset {% if p.disabled_reason %}disabled{% endif %}"
-                         {% if p.disabled_reason %}title="{{ p.disabled_reason }}"{% endif %}>
-                    <input type="checkbox"
-                           name="selected"
-                           value="{{ p.id }}"
-                           {% if p.enabled and not p.disabled_reason %}checked{% endif %}
-                           {% if p.disabled_reason %}disabled{% endif %} />
-                    <span class="preset-label">{{ p.label }}</span>
-                    {% if p.disabled_reason %}<span class="hint">{{ p.disabled_reason }}</span>{% endif %}
-                  </label>
-                {% endfor %}
-              </div>
-            </div>
-          {% endfor %}
-        </fieldset>
-      {% endfor %}
-
-      <button type="submit" class="generate-btn">
-        Générer (<span id="count-cta">0</span>)
-      </button>
+      <button type="submit" class="generate-btn">Generate (<span id="count-cta">0</span>)</button>
     </form>
 
     <section id="results"></section>
@@ -85,19 +58,13 @@
 
   <script>
     const form = document.getElementById("gen-form");
-    const countEl = document.getElementById("count");
-    const countCta = document.getElementById("count-cta");
-    const countPlural = document.getElementById("count-plural");
+    const LANG = document.getElementById("lang-select");
 
     function updateCounts() {
       const checked = form.querySelectorAll('input[name="selected"]:checked').length;
-      countEl.textContent = checked;
-      countCta.textContent = checked;
-      countPlural.style.visibility = checked > 1 ? "visible" : "hidden";
-
-      // Per-provider counts
+      document.getElementById("count").textContent = checked;
+      document.getElementById("count-cta").textContent = checked;
       form.querySelectorAll('.provider-group').forEach(group => {
-        const total = group.querySelectorAll('input[name="selected"]').length;
         const sel = group.querySelectorAll('input[name="selected"]:checked').length;
         const out = group.querySelector('.provider-checked');
         if (out) out.textContent = sel;
@@ -105,40 +72,76 @@
       });
     }
 
-    form.addEventListener("change", (e) => {
+    // Favoris : tokens provider|model|voice en localStorage.
+    function favorites() {
+      try { return JSON.parse(localStorage.getItem("tts_box_favorites") || "[]"); }
+      catch { return []; }
+    }
+    function applyFavorites() {
+      const favs = new Set(favorites());
+      form.querySelectorAll('input[name="selected"]').forEach(cb => {
+        if (favs.has(cb.value)) cb.checked = true;
+      });
+      updateCounts();
+    }
+
+    // Recherche + filtre genre (sur le bloc #voices courant).
+    function applyFilters() {
+      const q = (document.getElementById("voice-search")?.value || "").toLowerCase();
+      const g = document.getElementById("gender-filter")?.value || "";
+      form.querySelectorAll('#voices .preset').forEach(label => {
+        const name = label.dataset.name || "";
+        const gender = label.dataset.gender || "";
+        const ok = name.includes(q) && (!g || gender === g);
+        label.style.display = ok ? "" : "none";
+      });
+    }
+
+    // Délégation : marche aussi après un swap HTMX de #voices.
+    document.addEventListener("input", (e) => {
+      if (e.target.id === "voice-search") applyFilters();
       if (e.target.name === "selected") updateCounts();
     });
-
-    // Global toggle (cocher / décocher tout)
-    form.querySelectorAll('[data-toggle-all]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const target = btn.dataset.toggleAll === "true";
-        form.querySelectorAll('input[name="selected"]:not(:disabled)').forEach(cb => {
-          cb.checked = target;
-        });
-        updateCounts();
-      });
+    document.addEventListener("change", (e) => {
+      if (e.target.id === "gender-filter") applyFilters();
     });
-
-    // Per-provider toggle
-    form.querySelectorAll('[data-toggle-provider]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const group = btn.closest('.provider-group');
-        const boxes = group.querySelectorAll('input[name="selected"]:not(:disabled)');
+    form.addEventListener("click", (e) => {
+      if (e.target.matches('[data-toggle-all]')) {
+        const t = e.target.dataset.toggleAll === "true";
+        form.querySelectorAll('#voices input[name="selected"]').forEach(cb => { cb.checked = t; });
+        updateCounts();
+      }
+      if (e.target.matches('[data-toggle-provider]')) {
+        const group = e.target.closest('.provider-group');
+        const boxes = group.querySelectorAll('input[name="selected"]');
         const allChecked = Array.from(boxes).every(cb => cb.checked);
         boxes.forEach(cb => { cb.checked = !allChecked; });
         updateCounts();
-      });
-    });
-
-    // Ctrl+Enter to submit from textarea
-    document.querySelector("textarea").addEventListener("keydown", (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
-        e.preventDefault();
-        form.requestSubmit();
+      }
+      if (e.target.id === "save-fav") {
+        const sel = Array.from(form.querySelectorAll('input[name="selected"]:checked')).map(cb => cb.value);
+        localStorage.setItem("tts_box_favorites", JSON.stringify(sel));
+        e.target.textContent = "★ Saved";
+        setTimeout(() => { e.target.textContent = "★ Save selection"; }, 1200);
       }
     });
 
+    // Persistance de la langue + ré-application favoris/compteurs après chaque swap de #voices.
+    const savedLang = localStorage.getItem("tts_box_lang");
+    if (savedLang && savedLang !== LANG.value) {
+      LANG.value = savedLang;
+      htmx.ajax("GET", "/voices?lang=" + encodeURIComponent(savedLang), {target: "#voices", swap: "innerHTML"});
+    }
+    LANG.addEventListener("change", () => localStorage.setItem("tts_box_lang", LANG.value));
+    document.body.addEventListener("htmx:afterSwap", (e) => {
+      if (e.target.id === "voices") { applyFilters(); applyFavorites(); }
+    });
+
+    document.querySelector("textarea").addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); form.requestSubmit(); }
+    });
+
+    applyFavorites();
     updateCounts();
   </script>
 </body>
