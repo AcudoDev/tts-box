@@ -5,15 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="color-scheme" content="light dark" />
   <title>TTS Box</title>
+  <!-- Anti-FOUC: apply the saved theme BEFORE the stylesheet paints.
+       Absent / invalid value = follow the OS (prefers-color-scheme). -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("tts_box_theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    })();
+  </script>
+  <!-- Brand favicon (box + cyan equalizer) as a data-URI so the browser
+       never requests /favicon.ico (that route stays as a 204 no-op). -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%3E%3Crect%20x='2.5'%20y='2.5'%20width='19'%20height='19'%20rx='5'%20fill='none'%20stroke='%230891b2'%20stroke-width='2'/%3E%3Cg%20fill='%230891b2'%3E%3Crect%20x='7'%20y='10'%20width='2.4'%20height='7'%20rx='1.2'/%3E%3Crect%20x='10.8'%20y='6.5'%20width='2.4'%20height='10.5'%20rx='1.2'/%3E%3Crect%20x='14.6'%20y='12'%20width='2.4'%20height='5'%20rx='1.2'/%3E%3C/g%3E%3C/svg%3E" />
   <!-- flag-icons (lipis) — MIT licensed SVG country flags, render on every OS incl. Windows -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons@7/css/flag-icons.min.css" />
+  <!-- Inter + JetBrains Mono (Google Fonts, display=swap). -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="/static/style.css" />
   <script src="https://unpkg.com/htmx.org@2.0.3"></script>
 </head>
 <body>
   <header>
-    <h1>TTS Box</h1>
-    <p class="tagline">Compare TTS providers side-by-side</p>
+    <div class="brand">
+      <svg class="brand-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="2.5" y="2.5" width="19" height="19" rx="5" fill="none" stroke="currentColor" stroke-width="2" />
+        <g fill="currentColor">
+          <rect x="7" y="10" width="2.4" height="7" rx="1.2" />
+          <rect x="10.8" y="6.5" width="2.4" height="10.5" rx="1.2" />
+          <rect x="14.6" y="12" width="2.4" height="5" rx="1.2" />
+        </g>
+      </svg>
+      <div class="brand-text">
+        <h1>TTS Box</h1>
+        <p class="tagline">Compare TTS providers side-by-side</p>
+      </div>
+    </div>
+    <button type="button" id="theme-toggle" class="theme-toggle"
+            aria-label="Toggle color theme" aria-pressed="false" title="Toggle theme">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+      </svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+      </svg>
+    </button>
   </header>
 
   <main>
@@ -144,6 +185,31 @@
     document.querySelector("textarea").addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); form.requestSubmit(); }
     });
+
+    // Theme toggle: cycle system → light → dark → system, persist, reflect aria-pressed.
+    // Reuses the localStorage pattern (tts_box_lang / tts_box_favorites). The anti-FOUC
+    // head script already applied the saved value to <html data-theme> before paint.
+    const THEME_KEY = "tts_box_theme";
+    const themeBtn = document.getElementById("theme-toggle");
+    function applyTheme(mode) {
+      if (mode === "light" || mode === "dark") {
+        document.documentElement.dataset.theme = mode;
+        try { localStorage.setItem(THEME_KEY, mode); } catch (e) {}
+      } else {
+        delete document.documentElement.dataset.theme;
+        try { localStorage.removeItem(THEME_KEY); } catch (e) {}
+      }
+      const forced = mode === "light" || mode === "dark";
+      themeBtn.setAttribute("aria-pressed", forced ? "true" : "false");
+      themeBtn.title = "Theme: " + (forced ? mode : "system");
+    }
+    themeBtn.addEventListener("click", () => {
+      const cur = document.documentElement.dataset.theme || "system";
+      const next = cur === "system" ? "light" : cur === "light" ? "dark" : "system";
+      applyTheme(next);
+    });
+    // Sync button state with whatever the head script already set.
+    applyTheme(document.documentElement.dataset.theme || "system");
 
     applyFavorites();
     updateCounts();

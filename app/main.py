@@ -50,13 +50,15 @@ def _sample_text(lang: str) -> str:
     return SAMPLE_TEXT.get(lang, SAMPLE_TEXT["en"])
 
 
+# Provider display LABELS only. Accent colors now live in style.css as
+# --p-* tokens keyed on [data-provider] (see "Provider accent tokens").
 _PROVIDER_DISPLAY = {
-    "elevenlabs": {"label": "ElevenLabs",  "color": "#7c3aed"},
-    "openai":     {"label": "OpenAI",      "color": "#10a37f"},
-    "cartesia":   {"label": "Cartesia",    "color": "#6b7280"},
-    "murf":       {"label": "Murf",        "color": "#ea580c"},
-    "azure":      {"label": "Azure Speech","color": "#0078d4"},
-    "openrouter": {"label": "OpenRouter",  "color": "#6366f1"},
+    "elevenlabs": {"label": "ElevenLabs"},
+    "openai":     {"label": "OpenAI"},
+    "cartesia":   {"label": "Cartesia"},
+    "murf":       {"label": "Murf"},
+    "azure":      {"label": "Azure Speech"},
+    "openrouter": {"label": "OpenRouter"},
 }
 
 

@@ -1,38 +1,16 @@
 /* =====================================================================
-   Design tokens — two layers
-   Layer 1: primitives (raw color ramps + space/type/radius/motion scales)
-   Layer 2: semantic role tokens that map onto the primitives.
-   Phase 0 is pure plumbing: the LIGHT theme renders identically to before.
-   The final LIGHT/DARK palettes + theme-switch mechanism arrive in Phase 1.
+   Design tokens — LIGHT + DARK semantic palettes (Phase 1)
+   Accent = CYAN. Theme mechanism (order matters):
+     1. :root            → scale tokens + LIGHT semantics
+     2. @media (prefers-color-scheme: dark) :root:not([data-theme="light"])
+                         → DARK semantics (OS-driven, unless user forced light)
+     3. [data-theme="dark"] / [data-theme="light"]
+                         → manual override always wins
+   Existing semantic names (--bg --surface --fg --muted --border --accent …)
+   are kept so the ~40 current var() refs render unchanged.
    ===================================================================== */
 :root {
-  /* ── Layer 1 · primitive color ramps ──────────────────────────── */
-  /* Neutral ramp (gray) — current light surfaces/ink. */
-  --neutral-0: #ffffff;
-  --neutral-25: #fafbfc;
-  --neutral-50: #f4f5f7;
-  --neutral-200: #e5e7eb;
-  --neutral-300: #d1d5db;
-  --neutral-500: #6b7280;
-  --neutral-700: #374151;
-  --neutral-900: #111827;
-
-  /* Accent ramp. */
-  --accent-500: #2563eb;
-  --accent-600: #1d4ed8;
-  --accent-50: #eff6ff;
-
-  /* State ramps. */
-  --green-50: #ecfdf5;
-  --green-600: #059669;
-  --red-50: #fef2f2;
-  --red-600: #dc2626;
-
-  /* Alpha primitives (elevation + hairlines). */
-  --shadow-color: 0deg 0% 0%;
-  --flag-ring-color: rgba(0, 0, 0, 0.1);
-
-  /* ── Layer 1 · type scale ─────────────────────────────────────── */
+  /* ── Type scale ───────────────────────────────────────────────── */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --fs-xs: 0.72rem;
@@ -46,7 +24,7 @@
   --fw-semibold: 600;
   --fw-bold: 700;
 
-  /* ── Layer 1 · spacing scale ──────────────────────────────────── */
+  /* ── Spacing scale ────────────────────────────────────────────── */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -54,45 +32,154 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
 
-  /* ── Layer 1 · radius scale ───────────────────────────────────── */
+  /* ── Radius scale ─────────────────────────────────────────────── */
   --radius-sm: 6px;
   --radius: 10px;
   --radius-lg: 14px;
   --radius-pill: 999px;
 
-  /* ── Layer 1 · motion ─────────────────────────────────────────── */
+  /* ── Motion ───────────────────────────────────────────────────── */
   --motion-fast: 80ms;
   --motion: 120ms;
   --motion-slow: 200ms;
 
-  /* ── Layer 1 · layout ─────────────────────────────────────────── */
+  /* ── Layout ───────────────────────────────────────────────────── */
   --gutter: var(--space-4); /* 1rem mobile → 1.5rem @600 → 2rem @960 */
 
-  /* ── Layer 2 · semantic role tokens ───────────────────────────── */
-  --bg: var(--neutral-50);
-  --surface: var(--neutral-0);
-  --surface-2: var(--neutral-25);
-  --fg: var(--neutral-900);
-  --fg-soft: var(--neutral-700);
-  --muted: var(--neutral-500);
-  --border: var(--neutral-200);
-  --border-strong: var(--neutral-300);
-  --accent: var(--accent-500);
-  --accent-hover: var(--accent-600);
-  --accent-soft: var(--accent-50);
-  --error: var(--red-600);
-  --error-bg: var(--red-50);
-  --ok: var(--green-600);
-  --ok-bg: var(--green-50);
+  /* ── Semantic role tokens · LIGHT ─────────────────────────────── */
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+  --border: #e5e7eb;
+  --border-strong: #d4d7dd;
+  --fg: #0f1729;
+  --fg-soft: #3b4252;
+  --muted: #57606f; /* darkened for WCAG AA on 0.72rem text */
+  --accent: #0891b2; /* CYAN */
+  --accent-hover: #0e7490;
+  --accent-soft: #ecfeff;
+  --ok: #059669;
+  --error: #dc2626;
+  --ok-bg: color-mix(in srgb, var(--ok) 10%, var(--surface));
+  --error-bg: color-mix(in srgb, var(--error) 9%, var(--surface));
   --ring: color-mix(in srgb, var(--accent) 35%, transparent);
-  --flag-ring: var(--flag-ring-color);
+  --flag-ring: rgba(0, 0, 0, 0.1);
 
-  --shadow-sm: 0 1px 2px hsl(var(--shadow-color) / 0.04);
-  --shadow: 0 1px 3px hsl(var(--shadow-color) / 0.06), 0 1px 2px hsl(var(--shadow-color) / 0.04);
-  --shadow-lg: 0 4px 12px hsl(var(--shadow-color) / 0.06), 0 2px 4px hsl(var(--shadow-color) / 0.04);
+  /* Elevation — soft black-alpha (LIGHT). */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 41, 0.05);
+  --shadow: 0 1px 3px rgba(15, 23, 41, 0.07), 0 1px 2px rgba(15, 23, 41, 0.05);
+  --shadow-lg: 0 4px 12px rgba(15, 23, 41, 0.08), 0 2px 4px rgba(15, 23, 41, 0.05);
 
-  --provider-color: var(--neutral-500); /* default; overridden per fieldset */
+  /* ── Provider accent tokens · LIGHT ───────────────────────────── */
+  --p-elevenlabs: #7c3aed;
+  --p-openai: #10a37f;
+  --p-murf: #ea580c;
+  --p-azure: #0078d4;
+  --p-openrouter: #6366f1;
+  --p-cartesia: #64748b;
+
+  --provider-color: var(--muted); /* default; overridden per [data-provider] */
 }
+
+/* ── Semantic role tokens · DARK (blue-gray ink, not pure black) ── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-2: #1c222b;
+    --border: #2a3038;
+    --border-strong: #3a424d;
+    --fg: #e6edf3;
+    --fg-soft: #b9c2cd;
+    --muted: #9aa3af;
+    --accent: #22d3ee; /* CYAN, distinct from Azure sky */
+    --accent-hover: #67e8f9;
+    --accent-soft: #0c2a31;
+    --ok: #3fb950;
+    --error: #f85149;
+    --ok-bg: color-mix(in srgb, var(--ok) 14%, var(--surface));
+    --error-bg: color-mix(in srgb, var(--error) 14%, var(--surface));
+    --flag-ring: rgba(255, 255, 255, 0.12);
+
+    /* Elevation — deeper black-alpha (DARK). */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.45);
+
+    /* Provider accent tokens — lifted for dark surfaces. */
+    --p-elevenlabs: #a78bfa;
+    --p-openai: #2dd4bf;
+    --p-murf: #fb923c;
+    --p-azure: #38bdf8;
+    --p-openrouter: #818cf8;
+    --p-cartesia: #94a3b8;
+  }
+}
+
+/* ── Manual theme override (toggle) — always wins over OS preference ── */
+[data-theme="light"] {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+  --border: #e5e7eb;
+  --border-strong: #d4d7dd;
+  --fg: #0f1729;
+  --fg-soft: #3b4252;
+  --muted: #57606f;
+  --accent: #0891b2;
+  --accent-hover: #0e7490;
+  --accent-soft: #ecfeff;
+  --ok: #059669;
+  --error: #dc2626;
+  --ok-bg: color-mix(in srgb, var(--ok) 10%, var(--surface));
+  --error-bg: color-mix(in srgb, var(--error) 9%, var(--surface));
+  --flag-ring: rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 41, 0.05);
+  --shadow: 0 1px 3px rgba(15, 23, 41, 0.07), 0 1px 2px rgba(15, 23, 41, 0.05);
+  --shadow-lg: 0 4px 12px rgba(15, 23, 41, 0.08), 0 2px 4px rgba(15, 23, 41, 0.05);
+  --p-elevenlabs: #7c3aed;
+  --p-openai: #10a37f;
+  --p-murf: #ea580c;
+  --p-azure: #0078d4;
+  --p-openrouter: #6366f1;
+  --p-cartesia: #64748b;
+}
+
+[data-theme="dark"] {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --surface-2: #1c222b;
+  --border: #2a3038;
+  --border-strong: #3a424d;
+  --fg: #e6edf3;
+  --fg-soft: #b9c2cd;
+  --muted: #9aa3af;
+  --accent: #22d3ee;
+  --accent-hover: #67e8f9;
+  --accent-soft: #0c2a31;
+  --ok: #3fb950;
+  --error: #f85149;
+  --ok-bg: color-mix(in srgb, var(--ok) 14%, var(--surface));
+  --error-bg: color-mix(in srgb, var(--error) 14%, var(--surface));
+  --flag-ring: rgba(255, 255, 255, 0.12);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.45);
+  --p-elevenlabs: #a78bfa;
+  --p-openai: #2dd4bf;
+  --p-murf: #fb923c;
+  --p-azure: #38bdf8;
+  --p-openrouter: #818cf8;
+  --p-cartesia: #94a3b8;
+}
+
+/* ── Provider color, keyed on [data-provider] (was inline style) ──── */
+.provider-group[data-provider="elevenlabs"] { --provider-color: var(--p-elevenlabs); }
+.provider-group[data-provider="openai"]     { --provider-color: var(--p-openai); }
+.provider-group[data-provider="murf"]       { --provider-color: var(--p-murf); }
+.provider-group[data-provider="azure"]      { --provider-color: var(--p-azure); }
+.provider-group[data-provider="openrouter"] { --provider-color: var(--p-openrouter); }
+.provider-group[data-provider="cartesia"]   { --provider-color: var(--p-cartesia); }
 
 * { box-sizing: border-box; }
 
@@ -108,22 +195,81 @@ body {
 
 /* ── Header ─────────────────────────────────────────── */
 header {
-  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 1rem var(--gutter);
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow-sm);
 }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+.brand-logo {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  color: var(--accent); /* SVG uses currentColor for the equalizer bars */
+}
+.brand-text { min-width: 0; }
 header h1 {
   margin: 0;
   font-size: 1.35rem;
-  font-weight: 700;
+  font-weight: var(--fw-bold);
   letter-spacing: -0.01em;
+  line-height: 1.1;
 }
 header .tagline {
   margin: 0.1rem 0 0;
   color: var(--muted);
   font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* ── Theme toggle ───────────────────────────────────── */
+.theme-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg-soft);
+  cursor: pointer;
+  transition: background var(--motion), border-color var(--motion), color var(--motion);
+}
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+/* Show the sun in dark mode (click → light) and the moon otherwise. */
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+  :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+}
+[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+[data-theme="light"] .theme-toggle .icon-sun { display: none; }
+[data-theme="light"] .theme-toggle .icon-moon { display: block; }
 
 main {
   max-width: 1280px;
@@ -259,7 +405,7 @@ textarea:focus {
   padding: 0.1rem 0.4rem 0.25rem;
 }
 .model-name {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.78rem;
   color: var(--fg-soft);
   background: color-mix(in srgb, var(--provider-color) 10%, transparent);
@@ -393,7 +539,7 @@ label.preset input[type="checkbox"]:disabled {
   font-size: 0.95rem;
 }
 .card-meta {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.72rem;
   color: var(--muted);
   letter-spacing: 0.01em;
@@ -417,8 +563,8 @@ label.preset input[type="checkbox"]:disabled {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-.card-footer .latency { color: var(--fg-soft); }
-.card-footer .cost { color: var(--fg-soft); margin-left: auto; }
+.card-footer .latency { font-family: var(--font-mono); color: var(--fg-soft); }
+.card-footer .cost { font-family: var(--font-mono); color: var(--fg-soft); margin-left: auto; }
 .card-footer .cost.muted { color: var(--muted); }
 .card-footer a.download {
   color: var(--accent);

@@ -8,11 +8,10 @@
 </div>
 
 {% for provider, models in groups %}
-  {% set display = provider_display.get(provider, {"label": provider, "color": "#888"}) %}
+  {% set display = provider_display.get(provider, {"label": provider}) %}
   {% set all_voices = [] %}
   {% for _, voices in models %}{% set _ = all_voices.extend(voices) %}{% endfor %}
-  <fieldset class="provider-group" data-provider="{{ provider }}"
-            style="--provider-color: {{ display.color }}">
+  <fieldset class="provider-group" data-provider="{{ provider }}">
     <legend>
       <span class="provider-dot"></span>
       <span class="provider-name">{{ display.label }}</span>
