@@ -73,3 +73,22 @@ async def test_synthesize_http_error(provider):
     )
     with pytest.raises(httpx.HTTPStatusError):
         await provider.synthesize("hi", "GEN2", "Natalie")
+
+
+@respx.mock
+async def test_list_voices_parses_locale_to_language(provider):
+    respx.get("https://api.murf.ai/v1/speech/voices").mock(
+        return_value=httpx.Response(200, json=[
+            {"voiceId": "fr-FR-axel", "displayName": "Axel", "locale": "fr-FR", "gender": "Male"},
+            {"voiceId": "en-US-natalie", "displayName": "Natalie", "locale": "en-US", "gender": "Female"},
+        ])
+    )
+    voices = await provider.list_voices("GEN2")
+    assert len(voices) == 2
+    axel = next(v for v in voices if v.id == "fr-FR-axel")
+    assert axel.name == "Axel"
+    assert axel.language == "fr"
+    assert axel.gender == "male"
+    assert axel.multilingual is False
+    req = respx.calls.last.request
+    assert req.headers["api-key"] == "mk-test"

@@ -51,9 +51,26 @@ class MurfProvider(TTSProvider):
         return list(_MODELS)
 
     async def list_voices(self, model: str) -> list[Voice]:
-        # Murf's /v1/speech/voices endpoint exists, but for our preset-driven
-        # use case we don't need to enumerate at runtime.
-        return []
+        # Murf returns a top-level JSON array of voice objects. Authoritative
+        # fields: voiceId, displayName, locale (BCP-47, e.g. "fr-FR"), gender
+        # (capitalized enum Male/Female/NonBinary).
+        async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+            r = await client.get(
+                "https://api.murf.ai/v1/speech/voices",
+                headers={"api-key": self.api_key},
+            )
+            r.raise_for_status()
+            data = r.json()
+        out: list[Voice] = []
+        for v in data:
+            locale = v.get("locale") or ""
+            out.append(Voice(
+                id=v["voiceId"],
+                name=v.get("displayName", v["voiceId"]),
+                language=locale[:2] or None,
+                gender=(v.get("gender") or "").lower() or None,
+            ))
+        return out
 
     async def synthesize(
         self, text: str, model: str, voice_id: str, language: str | None = None
