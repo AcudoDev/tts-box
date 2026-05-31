@@ -9,6 +9,18 @@ from app.providers.base import Voice
 client = TestClient(app)
 
 
+def test_download_name_readable_and_cross_os_safe():
+    from app.main import _download_name
+    assert _download_name("Rachel", "elevenlabs", "mp3") == "Rachel-elevenlabs.mp3"
+    # commas/parentheses stripped, hyphens/spaces kept
+    assert _download_name("Roger - Laid-Back, Casual", "elevenlabs", "mp3") == \
+        "Roger - Laid-Back Casual-elevenlabs.mp3"
+    # Unicode letters survive; OS-illegal chars (slash, colon) are removed
+    assert _download_name("Évariste", "azure", "wav") == "Évariste-azure.wav"
+    name = _download_name("google/gemini: v3", "openrouter", "wav")
+    assert "/" not in name and ":" not in name
+
+
 def test_favicon_returns_no_content_not_404():
     # The browser auto-requests /favicon.ico; we answer 204 instead of a noisy 404.
     r = client.get("/favicon.ico")

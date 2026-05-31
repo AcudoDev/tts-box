@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Annotated
 
@@ -109,6 +110,17 @@ def _ext_for(mime: str | None) -> str:
     return _MIME_TO_EXT.get((mime or "").lower(), "mp3")
 
 
+def _download_name(label: str, provider: str, ext: str) -> str:
+    """Readable, cross-OS-safe download filename, e.g. 'Rachel-elevenlabs.mp3'.
+
+    Strips characters that are illegal on Windows/macOS (slashes, colons, commas,
+    parentheses…) while keeping Unicode letters (accents, CJK).
+    """
+    base = re.sub(r"[^\w\-. ]", "", f"{label}-{provider}")
+    base = re.sub(r"\s+", " ", base).strip().rstrip(".")
+    return f"{base or 'audio'}.{ext}"
+
+
 def _provider_labels() -> dict[str, str]:
     return {name: disp["label"] for name, disp in _PROVIDER_DISPLAY.items()}
 
@@ -199,11 +211,13 @@ async def result(request: Request, session_id: str, option_id: str):
                 "error_msg": res.error_msg, "latency_ms": res.latency_ms,
             },
         )
+    ext = _ext_for(res.mime)
     return templates.TemplateResponse(
         request, "card_done.html",
         {
             "option": option, "session_id": session_id, "latency_ms": res.latency_ms,
-            "ext": _ext_for(res.mime), "char_count": res.char_count, "cost_usd": res.cost_usd,
+            "ext": ext, "char_count": res.char_count, "cost_usd": res.cost_usd,
+            "download_name": _download_name(option.label, option.provider, ext),
         },
     )
 

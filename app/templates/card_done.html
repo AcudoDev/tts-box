@@ -20,7 +20,7 @@
             aria-label="Cost unknown for this model"><span aria-hidden="true">— $</span></span>
     {% endif %}
     <a class="download" href="/audio/{{ session_id }}/{{ option.id }}.{{ ext }}"
-       download="{{ option.id }}.{{ ext }}" aria-label="Download {{ option.label }} audio">
+       download="{{ download_name }}" aria-label="Download {{ option.label }} audio">
       <span aria-hidden="true">↓</span> DL</a>
   </div>
 </div>
