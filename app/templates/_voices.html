@@ -43,9 +43,11 @@
           {% for v in voices %}
             <label class="preset" data-name="{{ v.name|lower }}" data-gender="{{ v.gender or '' }}">
               <input type="checkbox" name="selected" value="{{ provider }}|{{ model }}|{{ v.id }}" />
-              {# Flag = the voice's own declared language (origin), regardless of whether
-                 the model is multilingual. Globe only when the voice has no language. #}
-              {% set cc = v.language | flag_country %}
+              {# Flag = this language's flag only when the voice is NATIVE to the
+                 selected language. Multilingual voices shown under another language
+                 (and language-less voices) get a globe. Localized voices only ever
+                 appear under their own language, so they always get their flag. #}
+              {% set cc = (v.language | flag_country) if v.language == current_lang else none %}
               {% if cc %}
                 <span class="fi fi-{{ cc }} flag" aria-hidden="true"></span>
                 <span class="sr-only">{{ v.language }}</span>
