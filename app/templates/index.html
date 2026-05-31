@@ -235,13 +235,30 @@
       }
     });
 
+    // Sample texts per language — injected server-side, consumed here only.
+    const SAMPLE_TEXTS = {{ sample_texts | tojson }};
+    const DEFAULT_SAMPLE = SAMPLE_TEXTS["en"];
+    const textarea = document.getElementById("text-input");
+
+    function updateSampleText(lang) {
+      const sample = SAMPLE_TEXTS[lang] || SAMPLE_TEXTS["en"];
+      // Only replace if the textarea still holds a known sample text (not custom input).
+      const current = textarea.value.trim();
+      const isDefault = Object.values(SAMPLE_TEXTS).some(t => t.trim() === current) || current === "";
+      if (isDefault) textarea.value = sample;
+    }
+
     // Persistance de la langue + ré-application favoris/compteurs après chaque swap de #voices.
     const savedLang = localStorage.getItem("tts_box_lang");
     if (savedLang && savedLang !== LANG.value) {
       LANG.value = savedLang;
       htmx.ajax("GET", "/voices?language=" + encodeURIComponent(savedLang), {target: "#voices", swap: "innerHTML"});
+      updateSampleText(savedLang);
     }
-    LANG.addEventListener("change", () => localStorage.setItem("tts_box_lang", LANG.value));
+    LANG.addEventListener("change", () => {
+      localStorage.setItem("tts_box_lang", LANG.value);
+      updateSampleText(LANG.value);
+    });
 
     // Results separation: a heading that announces "Comparing N voices" and a live
     // "X done · Y failed" tally. The card grid (#results) is innerHTML-swapped by the

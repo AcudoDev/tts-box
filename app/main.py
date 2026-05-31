@@ -35,14 +35,48 @@ SYNTH = Synthesizer()
 
 DEFAULT_LANG = "en"
 
-# Texte d'exemple par langue (fallback EN). Sert d'amorce au chargement.
-SAMPLE_TEXT = {
+# Sample text per language (ISO 639-1 key, fallback = EN).
+# Each sentence exercises prosody, rhythm and naturalness — useful for TTS comparison.
+SAMPLE_TEXT: dict[str, str] = {
     "en": "Hello, this is a test sentence to compare several text-to-speech voices. "
           "Listen to the prosody, rhythm and overall quality across providers.",
     "fr": "Bonjour, voici un texte de test pour comparer plusieurs voix de synthèse vocale. "
           "Évaluez la prosodie, le rythme et la qualité entre les fournisseurs.",
-    "es": "Hola, esta es una frase de prueba para comparar varias voces de síntesis de voz.",
-    "de": "Hallo, dies ist ein Testsatz zum Vergleich mehrerer Sprachausgabe-Stimmen.",
+    "es": "Hola, esta es una frase de prueba para comparar varias voces de síntesis de voz. "
+          "Escucha la prosodia, el ritmo y la calidad general de los proveedores.",
+    "de": "Hallo, dies ist ein Testsatz zum Vergleich mehrerer Sprachausgabe-Stimmen. "
+          "Achten Sie auf Prosodie, Rhythmus und Klangqualität.",
+    "it": "Ciao, questa è una frase di prova per confrontare diverse voci di sintesi vocale. "
+          "Ascolta la prosodia, il ritmo e la qualità complessiva.",
+    "pt": "Olá, esta é uma frase de teste para comparar várias vozes de texto para fala. "
+          "Ouça a prosódia, o ritmo e a qualidade geral entre os provedores.",
+    "nl": "Hallo, dit is een testzin om meerdere tekst-naar-spraak-stemmen te vergelijken. "
+          "Let op de prosodie, het ritme en de algehele kwaliteit.",
+    "pl": "Cześć, to jest zdanie testowe do porównania kilku głosów syntezy mowy. "
+          "Zwróć uwagę na prozodię, rytm i ogólną jakość.",
+    "ru": "Привет, это тестовое предложение для сравнения нескольких голосов синтеза речи. "
+          "Обратите внимание на просодию, ритм и общее качество.",
+    "tr": "Merhaba, bu, çeşitli metinden konuşmaya seslerini karşılaştırmak için bir test cümlesidir. "
+          "Prozodi, ritim ve genel kaliteye dikkat edin.",
+    "ar": "مرحباً، هذه جملة اختبارية لمقارنة عدة أصوات تحويل النص إلى كلام. "
+          "استمع إلى النبر والإيقاع والجودة العامة عبر مزودي الخدمة.",
+    "hi": "नमस्ते, यह टेक्स्ट-टू-स्पीच आवाज़ों की तुलना के लिए एक परीक्षण वाक्य है। "
+          "स्वर, लय और समग्र गुणवत्ता पर ध्यान दें।",
+    "zh": "你好，这是一个用于比较多种文本转语音声音的测试句子。请留意语调、节奏和整体质量。",
+    "ja": "こんにちは、これは複数の音声合成の声を比較するためのテスト文です。"
+          "韻律、リズム、そして全体的な品質に注目してください。",
+    "ko": "안녕하세요, 여러 텍스트 음성 변환 목소리를 비교하기 위한 테스트 문장입니다. "
+          "억양, 리듬, 그리고 전반적인 품질에 주목하세요.",
+    "sv": "Hej, det här är en testmening för att jämföra flera text-till-tal-röster. "
+          "Lyssna på prosodi, rytm och övergripande kvalitet.",
+    "da": "Hej, dette er en testsætning til at sammenligne flere tekst-til-tale-stemmer. "
+          "Lyt til prosodi, rytme og den overordnede kvalitet.",
+    "nb": "Hei, dette er en testsetning for å sammenligne flere tekst-til-tale-stemmer. "
+          "Lytt til prosodi, rytme og generell kvalitet.",
+    "fi": "Hei, tämä on testilause useiden teksti puheeksi -äänten vertailuun. "
+          "Kuuntele prosodiaa, rytmiä ja yleistä laatua.",
+    "uk": "Привіт, це тестове речення для порівняння декількох голосів синтезу мовлення. "
+          "Зверніть увагу на просодію, ритм та загальну якість.",
 }
 
 
@@ -96,6 +130,7 @@ async def index(request: Request):
     ctx = await _voices_context(DEFAULT_LANG)
     ctx["request"] = request
     ctx["sample_text"] = _sample_text(DEFAULT_LANG)
+    ctx["sample_texts"] = SAMPLE_TEXT  # passed as-is; template uses | tojson
     return templates.TemplateResponse(request, "index.html", ctx)
 
 
