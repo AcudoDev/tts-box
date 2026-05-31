@@ -44,10 +44,19 @@ def test_voice_matches_language_localized():
     assert voice_matches_language(fr, "de") is False
 
 
-def test_voice_matches_language_multilingual_always():
-    ml = Voice(id="v", name="Rachel", multilingual=True)
-    assert voice_matches_language(ml, "fr") is True
-    assert voice_matches_language(ml, "de") is True
+def test_voice_matches_language_generalist_appears_everywhere():
+    # No declared language (OpenAI, Gemini, gpt-4o-mini) → shown under every language.
+    generalist = Voice(id="v", name="nova", multilingual=True)  # language=None
+    assert voice_matches_language(generalist, "fr") is True
+    assert voice_matches_language(generalist, "ar") is True
+
+
+def test_voice_matches_language_declared_language_filters_even_if_multilingual():
+    # A voice with a declared language (e.g. Voxtral 'Marie (French)') appears ONLY under
+    # that language, even though its model is multilingual.
+    marie = Voice(id="v", name="Marie (French)", language="fr", multilingual=True)
+    assert voice_matches_language(marie, "fr") is True
+    assert voice_matches_language(marie, "de") is False
 
 
 class _Counter(TTSProvider):

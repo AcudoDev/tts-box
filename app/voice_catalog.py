@@ -30,7 +30,13 @@ def parse_token(token: str) -> tuple[str, str, str]:
 
 
 def voice_matches_language(voice: Voice, lang: str) -> bool:
-    return voice.multilingual or voice.language == lang
+    """A voice with a declared language appears only under that language; a voice with
+    no language (OpenAI, Gemini, gpt-4o-mini…) is a generalist shown under every language.
+
+    The model's multilingual *capability* no longer widens a language-specific voice
+    (e.g. Voxtral 'Marie (French)') to other languages — the declared language governs.
+    """
+    return voice.language is None or voice.language == lang
 
 
 _TTL_SECONDS = 3600.0
