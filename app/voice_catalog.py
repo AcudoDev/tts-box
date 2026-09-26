@@ -55,7 +55,7 @@ async def _voices_for(name: str, provider: TTSProvider, model: str, *, refresh: 
         if hit and (time.monotonic() - hit[0]) < _TTL_SECONDS:
             return hit[1]
     voices = await provider.list_voices(model)
-    _cache[(name, model)] = (time.monotonic(), voices)
+    _cache[key] = (time.monotonic(), voices)
     return voices
 
 
@@ -67,13 +67,9 @@ async def fetch_all(
         try:
             models = provider.list_models()
             if not provider.voices_depend_on_model and models:
+                # Same list for every model: fetch/cache it once, under models[0].
                 shared = await _voices_for(name, provider, models[0], refresh=refresh)
-                # Réutilise la même liste pour tous les modèles, mais peuple le cache par modèle.
-                by_model = {}
-                for m in models:
-                    _cache[(name, m)] = (time.monotonic(), shared)
-                    by_model[m] = shared
-                return name, by_model
+                return name, dict.fromkeys(models, shared)
             results = await asyncio.gather(
                 *(_voices_for(name, provider, m, refresh=refresh) for m in models)
             )
@@ -138,25 +134,10 @@ LANGUAGE_NAMES: dict[str, str] = {code: name for code, (name, _) in _LANGUAGES.i
 _CURATED = {"en", "fr", "es", "de", "it", "pt", "nl", "pl", "ru", "tr", "ar", "hi", "zh", "ja", "ko"}
 
 
-def _flag_emoji(country: str) -> str:
-    """ISO 3166-1 alpha-2 country code → flag emoji (regional indicator pair)."""
-    return "".join(chr(0x1F1E6 + ord(c) - ord("A")) for c in country.upper())
-
-
-def flag_for(language: str | None) -> str:
-    """Flag emoji for a language code. None or unknown → globe."""
-    if not language:
-        return "🌐"
-    country = (_LANGUAGES.get(language) or (None, None))[1]
-    return _flag_emoji(country) if country else "🌐"
-
-
 def flag_country(language: str | None) -> str | None:
     """Lowercase ISO 3166-1 country code for a language's flag (consumed by the
     flag-icons CSS class `fi-XX`). None when there's no representative country."""
-    if not language:
-        return None
-    country = (_LANGUAGES.get(language) or (None, None))[1]
+    country = _LANGUAGES.get(language or "", (None, None))[1]
     return country.lower() if country else None
 
 

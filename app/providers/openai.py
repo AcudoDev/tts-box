@@ -26,7 +26,7 @@ class OpenAIProvider(TTSProvider):
 
     async def list_voices(self, model: str) -> list[Voice]:
         ids = _GPT4O_MINI_VOICES if model == "gpt-4o-mini-tts" else _VOICES
-        return [Voice(id=v, name=v, multilingual=True) for v in ids]
+        return [Voice(id=v, name=v) for v in ids]
 
     async def synthesize(
         self, text: str, model: str, voice_id: str, language: str | None = None

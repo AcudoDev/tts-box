@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import io
 import re
-import struct
+import wave
 
 import httpx
 
@@ -191,7 +192,7 @@ _MINIMAX_VOICES = [
 ]
 
 # Kokoro-82m — 54 fixed preset voices. Voice id = [lang][gender]_[name]; the first
-# letter encodes the language. Each voice is single-language (multilingual=False).
+# letter encodes the language. Each voice is single-language.
 _KOKORO_PREFIX_LANG = {
     "a": "en", "b": "en", "e": "es", "f": "fr",
     "h": "hi", "i": "it", "j": "ja", "p": "pt", "z": "zh",
@@ -227,30 +228,30 @@ def _deepgram_voice(vid: str) -> Voice:
 def _build_voices_by_model() -> dict[str, list[Voice]]:
     out: dict[str, list[Voice]] = {}
     for m in _PCM_ONLY_MODELS:  # every Gemini TTS model shares the same 30 voices
-        out[m] = [Voice(id=v, name=v, multilingual=True) for v in _GEMINI_VOICES]
+        out[m] = [Voice(id=v, name=v) for v in _GEMINI_VOICES]
     for m in ("microsoft/mai-voice-2", "microsoft/mai-voice-2-flash"):
         out[m] = [
-            Voice(id=v, name=v.split(":")[0].rsplit("-", 1)[1], language=v[:2], multilingual=True)
+            Voice(id=v, name=v.split(":")[0].rsplit("-", 1)[1], language=v[:2])
             for v in _MAI_VOICES
         ]
     out["x-ai/grok-voice-tts-1.0"] = [
-        Voice(id=v, name=v.capitalize(), multilingual=True) for v in _GROK_VOICES
+        Voice(id=v, name=v.capitalize()) for v in _GROK_VOICES
     ]
     for m in ("minimax/speech-2.8-hd", "minimax/speech-2.8-turbo"):
         out[m] = [
             Voice(
                 id=v, name=v.removeprefix("English_").replace("_", " "),
-                language="en", multilingual=True,
+                language="en",
             )
             for v in _MINIMAX_VOICES
         ]
     out["deepgram/aura-2"] = [_deepgram_voice(v) for v in _DEEPGRAM_AURA2_VOICES]
     out["deepgram/flux-tts:free"] = [_deepgram_voice(v) for v in _DEEPGRAM_FLUX_VOICES]
     for m, ids in _QWEN_VOICES.items():
-        out[m] = [Voice(id=v, name=v, multilingual=True) for v in ids]
+        out[m] = [Voice(id=v, name=v) for v in ids]
     out["sesame/csm-1b"] = [Voice(id=v, name=v, language="en") for v in _SESAME_VOICES]
     out["mistralai/voxtral-mini-tts-2603"] = [
-        Voice(id=vid, name=name, language=lang, multilingual=True)
+        Voice(id=vid, name=name, language=lang)
         for vid, name, lang in _VOXTRAL_VOICES
     ]
     out["hexgrad/kokoro-82m"] = [_kokoro_voice(v) for v in _KOKORO_VOICES]
@@ -260,7 +261,7 @@ def _build_voices_by_model() -> dict[str, list[Voice]]:
     # No named voices: "voice" is optional there, so expose a single "Default" entry
     # (empty id → omitted from the request) instead of hiding the model.
     for m in _DEFAULT_VOICE_MODELS:
-        out[m] = [Voice(id="", name="Default", multilingual=True)]
+        out[m] = [Voice(id="", name="Default")]
     return out
 
 
@@ -269,21 +270,15 @@ _VOICES_BY_MODEL = _build_voices_by_model()
 _PCM_RE = re.compile(r"rate=(\d+).*?channels=(\d+)", re.IGNORECASE)
 
 
-def _wrap_pcm_as_wav(pcm: bytes, sample_rate: int, channels: int, bits: int = 16) -> bytes:
-    """Wrap raw PCM (signed 16-bit LE by convention) in a 44-byte WAV header."""
-    byte_rate = sample_rate * channels * bits // 8
-    block_align = channels * bits // 8
-    data_size = len(pcm)
-    header = (
-        b"RIFF"
-        + struct.pack("<I", 36 + data_size)
-        + b"WAVE"
-        + b"fmt "
-        + struct.pack("<IHHIIHH", 16, 1, channels, sample_rate, byte_rate, block_align, bits)
-        + b"data"
-        + struct.pack("<I", data_size)
-    )
-    return header + pcm
+def _wrap_pcm_as_wav(pcm: bytes, sample_rate: int, channels: int) -> bytes:
+    """Wrap raw PCM (signed 16-bit LE by convention) in a WAV container."""
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(channels)
+        w.setsampwidth(2)
+        w.setframerate(sample_rate)
+        w.writeframes(pcm)
+    return buf.getvalue()
 
 
 class OpenRouterProvider(TTSProvider):

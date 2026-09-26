@@ -55,15 +55,5 @@ def test_subclass_must_have_name():
                 return (b"", "audio/mpeg")
 
 
-def test_voice_multilingual_defaults_false():
-    v = Voice(id="v1", name="Rachel")
-    assert v.multilingual is False
-
-
-def test_voice_accepts_multilingual_flag():
-    v = Voice(id="v1", name="Rachel", multilingual=True)
-    assert v.multilingual is True
-
-
 def test_provider_voices_depend_on_model_defaults_false():
     assert TTSProvider.voices_depend_on_model is False

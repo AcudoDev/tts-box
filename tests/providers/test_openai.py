@@ -43,11 +43,11 @@ async def test_list_voices_returns_static(provider):
     assert {"alloy", "nova", "shimmer"} <= names
 
 
-async def test_list_voices_are_multilingual():
+async def test_list_voices_are_generalist():
     from app.providers.openai import OpenAIProvider
     voices = await OpenAIProvider(api_key="k").list_voices("tts-1")
     assert len(voices) == 9
-    assert all(v.multilingual for v in voices)
+    assert all(v.language is None for v in voices)  # shown under every language
 
 
 async def test_list_voices_gpt4o_mini_has_13(provider):

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -24,21 +23,18 @@ def _format_error(e: Exception) -> str:
         code = e.response.status_code
         try:
             payload = e.response.json()
-        except (json.JSONDecodeError, ValueError):
+        except ValueError:  # JSONDecodeError is a ValueError subclass
             return f"HTTP {code}: {e.response.text[:120]}".strip()
+        if not isinstance(payload, dict):  # a list/str body must not crash the task
+            return f"HTTP {code}: {str(payload)[:200]}"
+        detail, error = payload.get("detail"), payload.get("error")
         msg = (
-            (payload.get("detail") or {}).get("message")
-            if isinstance(payload.get("detail"), dict)
-            else None
+            (detail.get("message") if isinstance(detail, dict) else None)
+            or (detail if isinstance(detail, str) else None)
+            or (error.get("message") if isinstance(error, dict) else None)
+            or payload.get("message")
+            or str(payload)[:200]
         )
-        if not msg:
-            msg = payload.get("detail") if isinstance(payload.get("detail"), str) else None
-        if not msg and isinstance(payload.get("error"), dict):
-            msg = payload["error"].get("message")
-        if not msg:
-            msg = payload.get("message")
-        if not msg:
-            msg = str(payload)[:200]
         return f"HTTP {code}: {msg}"
     return f"{type(e).__name__}: {e}"
 
@@ -60,6 +56,8 @@ class Result:
 class _Session:
     results: dict[str, Result] = field(default_factory=dict)
     selections: dict[str, Selection] = field(default_factory=dict)
+    providers: dict[str, TTSProvider] = field(default_factory=dict)
+    text: str = ""
     tasks: list[asyncio.Task] = field(default_factory=list)
 
 
@@ -77,16 +75,26 @@ class Synthesizer:
         # Purge everything else — mono-user, only one session at a time.
         self._sessions.clear()
         session_id = uuid.uuid4().hex[:8]
-        session = _Session()
+        session = _Session(text=text)
         self._sessions[session_id] = session
         for sel, provider in items:
             session.selections[sel.id] = sel
-            session.results[sel.id] = Result(status="pending")
-            task = asyncio.create_task(
-                self._run(session, sel.id, provider, text, sel.model, sel.voice, sel.language)
-            )
-            session.tasks.append(task)
+            session.providers[sel.id] = provider
+            self._spawn(session, sel)
         return session_id
+
+    def retry(self, session_id: str, option_id: str) -> Selection | None:
+        """Re-run synthesis for one option of the current session."""
+        session = self._sessions.get(session_id)
+        sel = session.selections.get(option_id) if session else None
+        if sel:
+            self._spawn(session, sel)
+        return sel
+
+    def _spawn(self, session: _Session, sel: Selection) -> None:
+        session.results[sel.id] = Result(status="pending")
+        # Keep a strong ref: asyncio only holds weak refs to running tasks.
+        session.tasks.append(asyncio.create_task(self._run(session, sel)))
 
     def get_selection(self, session_id: str, option_id: str) -> Selection | None:
         session = self._sessions.get(session_id)
@@ -94,30 +102,22 @@ class Synthesizer:
             return None
         return session.selections.get(option_id)
 
-    async def _run(
-        self,
-        session: _Session,
-        preset_id: str,
-        provider: TTSProvider,
-        text: str,
-        model: str,
-        voice: str,
-        language: str | None,
-    ) -> None:
+    async def _run(self, session: _Session, sel: Selection) -> None:
+        provider, text = session.providers[sel.id], session.text
         start = time.monotonic()
         try:
-            audio, mime = await provider.synthesize(text, model, voice, language)
+            audio, mime = await provider.synthesize(text, sel.model, sel.voice, sel.language)
             char_count = len(text)
-            session.results[preset_id] = Result(
+            session.results[sel.id] = Result(
                 status="done",
                 audio=audio,
                 mime=mime,
                 latency_ms=int((time.monotonic() - start) * 1000),
                 char_count=char_count,
-                cost_usd=estimate_cost_usd(provider.name, model, char_count),
+                cost_usd=estimate_cost_usd(provider.name, sel.model, char_count),
             )
         except Exception as e:
-            session.results[preset_id] = Result(
+            session.results[sel.id] = Result(
                 status="error",
                 latency_ms=int((time.monotonic() - start) * 1000),
                 error_msg=_format_error(e),

@@ -7,7 +7,6 @@ from app.voice_catalog import (
     clear_cache,
     fetch_all,
     flag_country,
-    flag_for,
     groups_for_language,
     option_id,
     parse_token,
@@ -39,14 +38,14 @@ def test_parse_token_rejects_malformed():
 
 
 def test_voice_matches_language_localized():
-    fr = Voice(id="v", name="Denise", language="fr", multilingual=False)
+    fr = Voice(id="v", name="Denise", language="fr")
     assert voice_matches_language(fr, "fr") is True
     assert voice_matches_language(fr, "de") is False
 
 
 def test_voice_matches_language_generalist_appears_everywhere():
     # No declared language (OpenAI, Gemini, gpt-4o-mini) → shown under every language.
-    generalist = Voice(id="v", name="nova", multilingual=True)  # language=None
+    generalist = Voice(id="v", name="nova")  # language=None
     assert voice_matches_language(generalist, "fr") is True
     assert voice_matches_language(generalist, "ar") is True
 
@@ -54,7 +53,7 @@ def test_voice_matches_language_generalist_appears_everywhere():
 def test_voice_matches_language_declared_language_filters_even_if_multilingual():
     # A voice with a declared language (e.g. Voxtral 'Marie (French)') appears ONLY under
     # that language, even though its model is multilingual.
-    marie = Voice(id="v", name="Marie (French)", language="fr", multilingual=True)
+    marie = Voice(id="v", name="Marie (French)", language="fr")
     assert voice_matches_language(marie, "fr") is True
     assert voice_matches_language(marie, "de") is False
 
@@ -140,7 +139,7 @@ def _fetched():
             Voice(id="fr-FR-DeniseNeural", name="Denise", language="fr"),
             Voice(id="de-DE-KatjaNeural", name="Katja", language="de"),
         ]},
-        "openai": {"tts-1": [Voice(id="nova", name="nova", multilingual=True)]},
+        "openai": {"tts-1": [Voice(id="nova", name="nova")]},
     }
 
 
@@ -173,14 +172,6 @@ def test_resolve_voice_finds_in_fetched():
     assert resolve_voice(_fetched(), "azure", "neural-standard", "ghost") is None
 
 
-def test_flag_for_localized_multilingual_and_unknown():
-    assert flag_for("fr") == "🇫🇷"
-    assert flag_for("ja") == "🇯🇵"
-    assert flag_for("en") == "🇬🇧"
-    assert flag_for(None) == "🌐"   # no language → globe
-    assert flag_for("zz") == "🌐"   # unknown code → globe
-
-
 def test_flag_country_codes():
     # Lowercase ISO 3166-1 codes for the flag-icons `fi-XX` class.
     assert flag_country("fr") == "fr"
@@ -198,3 +189,19 @@ def test_language_names_are_english_and_comprehensive():
     for code in ["af", "wu", "yu", "iu", "nb", "ps", "or", "sw", "uz"]:
         name = LANGUAGE_NAMES.get(code)
         assert name and name != code
+
+
+async def test_cache_hits_do_not_extend_ttl(monkeypatch):
+    from types import SimpleNamespace
+
+    import app.voice_catalog as vc
+    now = [0.0]
+    # Patch the module's `time` name only — the global clock also drives asyncio.
+    monkeypatch.setattr(vc, "time", SimpleNamespace(monotonic=lambda: now[0]))
+    p = _Counter()
+    await fetch_all({"counter": p})
+    now[0] = 3000.0
+    await fetch_all({"counter": p})  # cache hit
+    now[0] = 3700.0                  # > 1 h after the real fetch → must refetch
+    await fetch_all({"counter": p})
+    assert p.calls == 2

@@ -10,7 +10,6 @@ class Voice:
     name: str
     language: str | None = None
     gender: str | None = None
-    multilingual: bool = False
 
 
 _REGISTRY: dict[str, type[TTSProvider]] = {}

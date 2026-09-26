@@ -179,13 +179,13 @@
   --p-cartesia: #94a3b8;
 }
 
-/* ── Provider color, keyed on [data-provider] (was inline style) ──── */
-.provider-group[data-provider="elevenlabs"] { --provider-color: var(--p-elevenlabs); }
-.provider-group[data-provider="openai"]     { --provider-color: var(--p-openai); }
-.provider-group[data-provider="murf"]       { --provider-color: var(--p-murf); }
-.provider-group[data-provider="azure"]      { --provider-color: var(--p-azure); }
-.provider-group[data-provider="openrouter"] { --provider-color: var(--p-openrouter); }
-.provider-group[data-provider="cartesia"]   { --provider-color: var(--p-cartesia); }
+/* ── Provider color, keyed on [data-provider] (voice groups + result cards) ── */
+[data-provider="elevenlabs"] { --provider-color: var(--p-elevenlabs); }
+[data-provider="openai"]     { --provider-color: var(--p-openai); }
+[data-provider="murf"]       { --provider-color: var(--p-murf); }
+[data-provider="azure"]      { --provider-color: var(--p-azure); }
+[data-provider="openrouter"] { --provider-color: var(--p-openrouter); }
+[data-provider="cartesia"]   { --provider-color: var(--p-cartesia); }
 
 * { box-sizing: border-box; }
 
@@ -347,6 +347,23 @@ textarea {
   color: var(--fg);
   transition: border-color 120ms, box-shadow 120ms;
 }
+.text-meta {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+}
+kbd {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  padding: 0 0.3em;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--surface);
+}
+@media (pointer: coarse) { .shortcut-hint { display: none; } }  /* no keyboard on touch */
+
 textarea:focus {
   outline: none;
   border-color: var(--accent);
@@ -403,9 +420,6 @@ textarea:focus {
 .provider-group.has-selection {
   border-color: color-mix(in srgb, var(--provider-color) 35%, var(--border));
   background: color-mix(in srgb, var(--provider-color) 3%, var(--surface));
-}
-.provider-group.provider-disabled {
-  opacity: 0.55;
 }
 
 /* <summary> is the clickable header. Strip the native disclosure triangle
@@ -665,6 +679,9 @@ label.preset input[type="checkbox"]:disabled {
   line-height: 1.3;
 }
 .card-voice {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   font-weight: 600;
   font-size: 0.95rem;
 }
@@ -739,9 +756,6 @@ label.preset input[type="checkbox"]:disabled {
 }
 .card-footer a.download:hover { text-decoration: underline; }
 
-/* Clearance so the last voice rows can scroll above the sticky Generate bar. */
-#voices { padding-bottom: 4.5rem; }
-
 .lang-row { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; }
 .lang-row select { padding: .35rem .5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--fg); }
 
@@ -759,7 +773,7 @@ label.preset input[type="checkbox"]:disabled {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
-.voices-toolbar input[type="search"] { flex: 1; padding: .4rem .6rem; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--fg); }
+.voices-toolbar input[type="search"] { flex: 1; min-width: 0; padding: .4rem .6rem; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--fg); }
 .voices-toolbar select { border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--surface); color: var(--fg); padding: .4rem .5rem; }
 /* "Showing N of M" live count. Pushed to its own line on phones; inline @600. */
 .voices-shown {
@@ -788,6 +802,13 @@ label.preset input[type="checkbox"]:disabled {
   #results { grid-template-columns: repeat(2, 1fr); }
   /* Enough room to sit the count inline at the end of the toolbar row. */
   .voices-shown { flex-basis: auto; margin-left: auto; }
+  /* Voice rows flow into columns when there's room (578 rows in one column = endless scroll). */
+  .model-voices {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    column-gap: 0.75rem;
+  }
+  .model-voices label.preset:last-child { border-bottom: 1px solid var(--border); }
 }
 
 @media (min-width: 960px) {

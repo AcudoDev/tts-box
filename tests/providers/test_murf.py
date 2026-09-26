@@ -91,6 +91,5 @@ async def test_list_voices_parses_locale_to_language(provider):
     assert axel.name == "Axel"
     assert axel.language == "fr"
     assert axel.gender == "male"
-    assert axel.multilingual is False
     req = respx.calls.last.request
     assert req.headers["api-key"] == "mk-test"

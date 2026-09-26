@@ -23,6 +23,8 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 templates = Jinja2Templates(directory=ROOT / "templates")
 templates.env.filters["flag_country"] = voice_catalog.flag_country
+# Cache-buster: a stale cached stylesheet would pair old CSS with new markup.
+templates.env.globals["css_version"] = int((ROOT / "static" / "style.css").stat().st_mtime)
 
 
 @app.get("/favicon.ico", include_in_schema=False)
@@ -85,15 +87,15 @@ def _sample_text(lang: str) -> str:
     return SAMPLE_TEXT.get(lang, SAMPLE_TEXT["en"])
 
 
-# Provider display LABELS only. Accent colors now live in style.css as
-# --p-* tokens keyed on [data-provider] (see "Provider accent tokens").
-_PROVIDER_DISPLAY = {
-    "elevenlabs": {"label": "ElevenLabs"},
-    "openai":     {"label": "OpenAI"},
-    "cartesia":   {"label": "Cartesia"},
-    "murf":       {"label": "Murf"},
-    "azure":      {"label": "Azure Speech"},
-    "openrouter": {"label": "OpenRouter"},
+# Provider display labels. Accent colors live in style.css as --p-* tokens keyed
+# on [data-provider] (see "Provider accent tokens").
+PROVIDER_LABELS = {
+    "elevenlabs": "ElevenLabs",
+    "openai":     "OpenAI",
+    "cartesia":   "Cartesia",
+    "murf":       "Murf",
+    "azure":      "Azure Speech",
+    "openrouter": "OpenRouter",
 }
 
 
@@ -121,19 +123,15 @@ def _download_name(label: str, provider: str, ext: str) -> str:
     return f"{base or 'audio'}.{ext}"
 
 
-def _provider_labels() -> dict[str, str]:
-    return {name: disp["label"] for name, disp in _PROVIDER_DISPLAY.items()}
-
-
 async def _voices_context(lang: str, *, refresh: bool = False) -> dict:
     fetched = await voice_catalog.fetch_all(PROVIDERS, refresh=refresh)
-    groups = voice_catalog.groups_for_language(fetched, _provider_labels(), lang)
+    groups = voice_catalog.groups_for_language(fetched, PROVIDER_LABELS, lang)
     languages = voice_catalog.available_languages(fetched)
     return {
         "groups": groups,
         "languages": [(code, voice_catalog.LANGUAGE_NAMES.get(code, code.upper())) for code in languages],
         "current_lang": lang,
-        "provider_display": _PROVIDER_DISPLAY,
+        "provider_labels": PROVIDER_LABELS,
     }
 
 
@@ -219,6 +217,16 @@ async def result(request: Request, session_id: str, option_id: str):
             "ext": ext, "char_count": res.char_count, "cost_usd": res.cost_usd,
             "download_name": _download_name(option.label, option.provider, ext),
         },
+    )
+
+
+@app.post("/retry/{session_id}/{option_id}", response_class=HTMLResponse)
+async def retry(request: Request, session_id: str, option_id: str):
+    option = SYNTH.retry(session_id, option_id)
+    if option is None:
+        raise HTTPException(404, "unknown session or option")
+    return templates.TemplateResponse(
+        request, "card_loading.html", {"option": option, "session_id": session_id},
     )
 
 

@@ -1,17 +1,17 @@
-<div class="card error" id="card-{{ option.id }}" role="alert">
+<div class="card error" data-provider="{{ option.provider }}" id="card-{{ option.id }}" role="alert">
   <div class="card-header">
-    <span class="card-voice">{{ option.label }}</span>
+    <span class="card-voice"><span class="provider-dot" aria-hidden="true"></span>{{ option.label }}</span>
     <span class="card-meta">{{ option.provider }} · {{ option.model }}</span>
   </div>
   <div class="card-body"><span aria-hidden="true">❌</span> {{ error_msg }}</div>
   <div class="card-footer">
     {% if latency_ms %}<span class="latency">{{ latency_ms }} ms</span>{% endif %}
     {% if session_id %}
-      <a class="card-retry" role="button"
-         hx-get="/result/{{ session_id }}/{{ option.id }}"
-         hx-target="#card-{{ option.id }}"
-         hx-swap="outerHTML"
-         aria-label="Retry {{ option.label }}"><span aria-hidden="true">↻</span> Retry</a>
+      <button type="button" class="card-retry link-btn"
+              hx-post="/retry/{{ session_id }}/{{ option.id }}"
+              hx-target="#card-{{ option.id }}"
+              hx-swap="outerHTML"
+              aria-label="Retry {{ option.label }}"><span aria-hidden="true">↻</span> Retry</button>
     {% endif %}
   </div>
 </div>

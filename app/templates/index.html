@@ -24,7 +24,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/style.css?v={{ css_version }}" />
   <script src="https://unpkg.com/htmx.org@2.0.3"></script>
 </head>
 <body>
@@ -75,7 +75,9 @@
 
       <label class="field-label" for="text-input">Text to synthesize</label>
       <textarea id="text-input" name="text" required autofocus rows="4"
-                placeholder="Type or paste your text here…">{{ sample_text }}</textarea>
+                placeholder="Type or paste your text here…" aria-describedby="text-meta">{{ sample_text }}</textarea>
+      <p class="text-meta" id="text-meta"><span id="char-count">{{ sample_text|length }}</span> characters<span class="shortcut-hint">
+        · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to generate</span></p>
 
       <div class="voices-header">
         <div class="voices-title">
@@ -118,9 +120,10 @@
     function updateCounts() {
       const checked = form.querySelectorAll('input[name="selected"]:checked').length;
       document.getElementById("count").textContent = checked;
-      document.getElementById("count-cta").textContent = checked;
-      // Sticky Generate bar: dim + disable when nothing is selected (N=0).
-      generateBtn.disabled = checked === 0;
+      const cta = document.getElementById("count-cta");  // absent while "Generating N…"
+      if (cta) cta.textContent = checked;
+      // Sticky Generate bar: dim + disable when nothing is selected (N=0) or in flight.
+      generateBtn.disabled = checked === 0 || generateBtn.hasAttribute("aria-busy");
       form.querySelectorAll('.provider-group').forEach(group => {
         const sel = group.querySelectorAll('input[name="selected"]:checked').length;
         const out = group.querySelector('.provider-checked');
@@ -190,6 +193,7 @@
     document.addEventListener("input", (e) => {
       if (e.target.id === "voice-search") applyFilters();
       if (e.target.name === "selected") updateCounts();
+      if (e.target.id === "text-input") updateCharCount();
     });
     document.addEventListener("change", (e) => {
       if (e.target.id === "gender-filter") applyFilters();
@@ -237,20 +241,21 @@
 
     // Sample texts per language — injected server-side, consumed here only.
     const SAMPLE_TEXTS = {{ sample_texts | tojson }};
-    const DEFAULT_SAMPLE = SAMPLE_TEXTS["en"];
     const textarea = document.getElementById("text-input");
+    const charCount = document.getElementById("char-count");
+    function updateCharCount() { charCount.textContent = textarea.value.length; }
 
     function updateSampleText(lang) {
       const sample = SAMPLE_TEXTS[lang] || SAMPLE_TEXTS["en"];
       // Only replace if the textarea still holds a known sample text (not custom input).
       const current = textarea.value.trim();
       const isDefault = Object.values(SAMPLE_TEXTS).some(t => t.trim() === current) || current === "";
-      if (isDefault) textarea.value = sample;
+      if (isDefault) { textarea.value = sample; updateCharCount(); }
     }
 
     // Persistance de la langue + ré-application favoris/compteurs après chaque swap de #voices.
     const savedLang = localStorage.getItem("tts_box_lang");
-    if (savedLang && savedLang !== LANG.value) {
+    if (savedLang && savedLang !== LANG.value && [...LANG.options].some(o => o.value === savedLang)) {
       LANG.value = savedLang;
       htmx.ajax("GET", "/voices?language=" + encodeURIComponent(savedLang), {target: "#voices", swap: "innerHTML"});
       updateSampleText(savedLang);
@@ -282,9 +287,11 @@
     let pendingResultsScroll = false;
     document.body.addEventListener("htmx:afterSwap", (e) => {
       if (e.target.id === "voices") { applyFilters(); applyFavorites(); }
-      // Both the grid swap (form POST) and each card's self-swap (done/error,
-      // outerHTML → fires on the #results parent) land here. Always re-tally;
-      // scroll only on the first swap of a generation.
+    });
+    // Tally on afterSettle, not afterSwap: a card swapped in place (same id) keeps its
+    // old class="card loading" until htmx settles, which undercounted "done".
+    // Scroll only on the first swap of a generation.
+    document.body.addEventListener("htmx:afterSettle", (e) => {
       if (e.target.id === "results" || (e.target.closest && e.target.closest("#results"))) {
         updateResultsHead();
         if (pendingResultsScroll) {
@@ -296,25 +303,22 @@
 
     // While /generate is in flight: mark the button busy ("Generating N…") and
     // disable it so a second tap can't fire a duplicate session. Restore after.
-    let prevCta = "0";
     form.addEventListener("htmx:beforeRequest", (e) => {
       if (e.target !== form) return; // ignore card/voices sub-requests
       pendingResultsScroll = true; // first #results swap will scroll the heading into view
       const n = form.querySelectorAll('input[name="selected"]:checked').length;
-      prevCta = document.getElementById("count-cta").textContent;
       generateBtn.setAttribute("aria-busy", "true");
       generateBtn.disabled = true;
       generateBtn.textContent = "Generating " + n + "…";
     });
     function endGenerate() {
       generateBtn.removeAttribute("aria-busy");
-      generateBtn.innerHTML = 'Generate (<span id="count-cta">' + prevCta + "</span>)";
+      generateBtn.innerHTML = 'Generate (<span id="count-cta">0</span>)';  // updateCounts fills it
       updateCounts();
     }
     form.addEventListener("htmx:afterRequest", (e) => { if (e.target === form) endGenerate(); });
-    form.addEventListener("htmx:responseError", (e) => { if (e.target === form) endGenerate(); });
 
-    document.querySelector("textarea").addEventListener("keydown", (e) => {
+    textarea.addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); form.requestSubmit(); }
     });
 

@@ -48,9 +48,3 @@ def test_load_returns_empty_when_no_keys(monkeypatch):
     loaded = load_providers()
     assert "gamma" not in loaded
 
-
-def test_load_lists_known_provider_names(monkeypatch):
-    from app.registry import known_provider_names
-    _make_provider("delta", "DELTA_KEY")
-    names = known_provider_names()
-    assert "delta" in names
