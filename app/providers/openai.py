@@ -7,23 +7,26 @@ from app.providers.base import TTSProvider, Voice
 URL = "https://api.openai.com/v1/audio/speech"
 TIMEOUT = httpx.Timeout(30.0)
 
-_MODELS = ["tts-1", "tts-1-hd"]
+# gpt-4o-mini-tts is served here since OpenRouter dropped it (2026-09).
+_MODELS = ["gpt-4o-mini-tts", "tts-1", "tts-1-hd"]
 
-_VOICES = [
-    "alloy", "ash", "ballad", "coral", "echo",
-    "fable", "nova", "onyx", "sage", "shimmer", "verse",
-]
+# Per OpenAI docs: tts-1/tts-1-hd take 9 voices; gpt-4o-mini-tts adds ballad, verse,
+# marin and cedar.
+_VOICES = ["alloy", "ash", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer"]
+_GPT4O_MINI_VOICES = _VOICES + ["ballad", "verse", "marin", "cedar"]
 
 
 class OpenAIProvider(TTSProvider):
     name = "openai"
     api_key_env = "OPENAI_API_KEY"
+    voices_depend_on_model = True
 
     def list_models(self) -> list[str]:
         return list(_MODELS)
 
     async def list_voices(self, model: str) -> list[Voice]:
-        return [Voice(id=v, name=v, multilingual=True) for v in _VOICES]
+        ids = _GPT4O_MINI_VOICES if model == "gpt-4o-mini-tts" else _VOICES
+        return [Voice(id=v, name=v, multilingual=True) for v in ids]
 
     async def synthesize(
         self, text: str, model: str, voice_id: str, language: str | None = None
