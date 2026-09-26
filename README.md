@@ -15,7 +15,7 @@ Pick a language, browse **every voice** your configured providers expose, tick a
   <img src="docs/screenshot-dark.png" alt="TTS Box — dark theme" width="49%" />
 </p>
 
-**Providers:** ElevenLabs · OpenAI · Azure Speech · Cartesia · Murf · OpenRouter (Gemini, gpt-4o-mini, Voxtral, Kokoro, and more) — hundreds of voices in one place.
+**Providers:** ElevenLabs · OpenAI · Azure Speech · Cartesia · Murf · OpenRouter (Gemini, MAI-Voice, Grok, MiniMax, Deepgram, Fish Audio, Voxtral, Kokoro, and more) — hundreds of voices in one place.
 
 ---
 
@@ -88,7 +88,7 @@ CI runs both on every push and pull request (`.github/workflows/ci.yml`).
 - **Pull, not push.** A small catalog layer (`app/voice_catalog.py`) calls each provider's `list_voices()` in parallel, caches the result (1 h TTL), and filters it by the selected language. There's no hand-maintained list of voices.
 - **One rule for language.** A voice with a declared language appears only under that language and shows its flag; a voice with no language is a generalist shown under every language with a 🌐.
 - **Server-rendered, no SPA.** Routes return HTML fragments swapped in by HTMX; theming and small interactions are native CSS custom properties + a few lines of vanilla JS.
-- **OpenRouter is the default route.** When a TTS model is reachable both through OpenRouter **and** as a direct integration, it's served via **OpenRouter** so it never appears twice — e.g. Google Gemini and Mistral Voxtral go through OpenRouter rather than a separate Google/Mistral provider (the direct Mistral integration was intentionally dropped). The direct integrations (ElevenLabs, OpenAI `tts-1`/`tts-1-hd`, Azure, Cartesia, Murf) cover models OpenRouter doesn't duplicate.
+- **OpenRouter is the default route.** When a TTS model is reachable both through OpenRouter **and** as a direct integration, it's served via **OpenRouter** so it never appears twice — e.g. Google Gemini and Mistral Voxtral go through OpenRouter rather than a separate Google/Mistral provider (the direct Mistral integration was intentionally dropped). The direct integrations (ElevenLabs, OpenAI `gpt-4o-mini-tts`/`tts-1`/`tts-1-hd`, Azure, Cartesia, Murf) cover models OpenRouter doesn't duplicate.
 
 ## 📦 Tech stack
 

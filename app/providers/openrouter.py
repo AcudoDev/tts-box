@@ -10,29 +10,49 @@ from app.providers.base import TTSProvider, Voice
 URL = "https://openrouter.ai/api/v1/audio/speech"
 TIMEOUT = httpx.Timeout(60.0)
 
-# Models routed through OpenRouter. We keep only the ones not already
-# covered by our direct provider integrations (openai/mistral are duplicates).
+# Models routed through OpenRouter — from GET /api/v1/models?output_modalities=speech,
+# vérifié le 2026-09-26. openai/gpt-4o-mini-tts (404) and zyphra/zonos-* (no endpoints)
+# were dropped by OpenRouter; gpt-4o-mini-tts now goes through the direct OpenAI provider.
 _MODELS = [
+    "google/gemini-3.8-flash-tts",
+    "google/gemini-3.8-flash-lite-tts",
     "google/gemini-3.1-flash-tts-preview",
-    "openai/gpt-4o-mini-tts-2025-12-15",
+    "microsoft/mai-voice-2",
+    "microsoft/mai-voice-2-flash",
+    "x-ai/grok-voice-tts-1.0",
+    "minimax/speech-2.8-hd",
+    "minimax/speech-2.8-turbo",
+    "deepgram/aura-2",
+    "deepgram/flux-tts:free",
+    "qwen/qwen-audio-3.0-tts-plus",
+    "qwen/qwen-audio-3.0-tts-flash",
+    "fish-audio/s2.1-pro",
+    "fish-audio/s2.1-pro-free:free",
+    "fish-audio/s2-pro",
+    "fish-audio/s1",
+    "bytedance-seed/seed-audio-1-0",
     "mistralai/voxtral-mini-tts-2603",
     "sesame/csm-1b",
     "hexgrad/kokoro-82m",
     "canopylabs/orpheus-3b-0.1-ft",
-    "zyphra/zonos-v0.1-transformer",
-    "zyphra/zonos-v0.1-hybrid",
 ]
 
 # Gemini TTS only supports response_format=pcm. The rest accept mp3.
-_PCM_ONLY_MODELS = {"google/gemini-3.1-flash-tts-preview"}
+_PCM_ONLY_MODELS = {m for m in _MODELS if m.startswith("google/gemini-")}
+
+# "voice" is optional and has no public named catalogue on these → provider default.
+_DEFAULT_VOICE_MODELS = [
+    m for m in _MODELS if m.startswith(("fish-audio/", "bytedance-seed/"))
+]
 
 
 # ---------------------------------------------------------------------------
-# Per-model voice catalogues — Vérifié le 2026-05-30.
+# Per-model voice catalogues — Vérifié le 2026-09-26.
 # Each entry maps an OpenRouter model id to its fixed set of named voices, passed
-# verbatim in the "voice" field of POST /api/v1/audio/speech. Models that expose
-# no named voices (cloning / speaker-id only, e.g. sesame/csm-1b) are deliberately
-# ABSENT so the UI falls back to a free-voice input.
+# verbatim in the "voice" field of POST /api/v1/audio/speech. Models without named
+# voices (Fish Audio: reference-id; Seed Audio: voice described in the prompt) get a
+# single "Default" voice — see _DEFAULT_VOICE_MODELS.
+# New lists (2026-09-26) are copied from the models API "supported_voices" field.
 # ---------------------------------------------------------------------------
 
 # Google Gemini TTS — 30 fixed prebuilt voices (named after stars/moons). All are
@@ -43,13 +63,6 @@ _GEMINI_VOICES = [
     "Despina", "Erinome", "Algenib", "Rasalgethi", "Laomedeia", "Achernar",
     "Alnilam", "Schedar", "Gacrux", "Pulcherrima", "Achird", "Zubenelgenubi",
     "Vindemiatrix", "Sadachbia", "Sadaltager", "Sulafat",
-]
-
-# OpenAI gpt-4o-mini-tts — 13 preset voices (the classic 11 + marin, cedar).
-# All multilingual (optimized for English but can speak ~99 languages).
-_GPT4O_MINI_VOICES = [
-    "alloy", "ash", "ballad", "coral", "echo", "fable",
-    "nova", "onyx", "sage", "shimmer", "verse", "marin", "cedar",
 ]
 
 # Mistral Voxtral — 30 built-in preset voices: 4 speakers × emotion variants.
@@ -92,14 +105,89 @@ _VOXTRAL_VOICES = [
 # OpenRouter (upstream "zoe" is not surfaced). English-only, not multilingual.
 _ORPHEUS_VOICES = ["tara", "leah", "jess", "leo", "dan", "mia", "zac"]
 
-# Zyphra Zonos (transformer + hybrid) — 5 fixed named voices each via OpenRouter.
-# The 4 accent personas are English; "random" picks an arbitrary speaker.
-_ZONOS_VOICES = [
-    ("american_female", "American Female", "en"),
-    ("american_male", "American Male", "en"),
-    ("british_female", "British Female", "en"),
-    ("british_male", "British Male", "en"),
-    ("random", "Random", None),
+# Sesame CSM-1B — speaker presets now exposed by OpenRouter. English-only.
+_SESAME_VOICES = [
+    "conversational_a", "conversational_b",
+    "read_speech_a", "read_speech_b", "read_speech_c", "read_speech_d", "none",
+]
+
+# Microsoft MAI-Voice-2 (+ Flash) — 4 locale-tagged voices "xx-YY-Name:MAI-Voice-2".
+# The model speaks 15 languages; the locale prefix is the voice's native language.
+_MAI_VOICES = [
+    "en-US-Harper:MAI-Voice-2", "es-MX-Valeria:MAI-Voice-2",
+    "fr-FR-Soleil:MAI-Voice-2", "de-DE-Klaus:MAI-Voice-2",
+]
+
+# xAI Grok Voice TTS — 5 voices, 20+ languages with automatic language detection.
+_GROK_VOICES = ["eve", "ara", "rex", "sal", "leo"]
+
+# Qwen-Audio-3.0-TTS (DashScope) — 2 voices per tier; multilingual, native language
+# not documented → generalist (shown under every language).
+_QWEN_VOICES = {
+    "qwen/qwen-audio-3.0-tts-plus": ["longanlingxin", "longanlufeng"],
+    "qwen/qwen-audio-3.0-tts-flash": ["loongjohn", "longanhuan_v3.6"],
+}
+
+# Deepgram — voice id ends with its language code ("aura-2-agathe-fr" → "fr").
+# Flux is English-only; Aura-2 voices are each single-language.
+_DEEPGRAM_FLUX_VOICES = [
+    "flux-alexis-en", "flux-bree-en", "flux-brittany-en", "flux-brooke-en",
+    "flux-bruce-en", "flux-cliff-en", "flux-cole-en", "flux-colin-en",
+    "flux-conor-en", "flux-donovan-en", "flux-drew-en", "flux-elise-en",
+    "flux-gemma-en", "flux-haley-en", "flux-hannah-en", "flux-heather-en",
+    "flux-jack-en", "flux-kai-en", "flux-kelsey-en", "flux-kit-en", "flux-maeve-en",
+    "flux-marcelo-en", "flux-marcus-en", "flux-meena-en", "flux-meghan-en",
+    "flux-miles-en", "flux-naveen-en", "flux-paige-en", "flux-priya-en",
+    "flux-rufus-en", "flux-sean-en", "flux-sharon-en", "flux-sienna-en",
+    "flux-tanner-en", "flux-wade-en", "flux-wes-en",
+]
+
+_DEEPGRAM_AURA2_VOICES = [
+    "aura-2-thalia-en", "aura-2-agathe-fr", "aura-2-agustina-es",
+    "aura-2-alvaro-es", "aura-2-ama-ja", "aura-2-amalthea-en",
+    "aura-2-andromeda-en", "aura-2-antonia-es", "aura-2-apollo-en",
+    "aura-2-aquila-es", "aura-2-arcas-en", "aura-2-aries-en", "aura-2-asteria-en",
+    "aura-2-athena-en", "aura-2-atlas-en", "aura-2-aurelia-de", "aura-2-aurora-en",
+    "aura-2-beatrix-nl", "aura-2-callista-en", "aura-2-carina-es",
+    "aura-2-celeste-es", "aura-2-cesare-it", "aura-2-cinzia-it", "aura-2-cora-en",
+    "aura-2-cordelia-en", "aura-2-cornelia-nl", "aura-2-daphne-nl",
+    "aura-2-delia-en", "aura-2-demetra-it", "aura-2-diana-es", "aura-2-dionisio-it",
+    "aura-2-draco-en", "aura-2-ebisu-ja", "aura-2-elara-de", "aura-2-electra-en",
+    "aura-2-elio-it", "aura-2-estrella-es", "aura-2-fabian-de", "aura-2-flavio-it",
+    "aura-2-fujin-ja", "aura-2-gloria-es", "aura-2-harmonia-en", "aura-2-hector-fr",
+    "aura-2-helena-en", "aura-2-hera-en", "aura-2-hermes-en", "aura-2-hestia-nl",
+    "aura-2-hyperion-en", "aura-2-iris-en", "aura-2-izanami-ja", "aura-2-janus-en",
+    "aura-2-javier-es", "aura-2-julius-de", "aura-2-juno-en", "aura-2-jupiter-en",
+    "aura-2-kara-de", "aura-2-lara-de", "aura-2-lars-nl", "aura-2-leda-nl",
+    "aura-2-livia-it", "aura-2-luciano-es", "aura-2-luna-en", "aura-2-maia-it",
+    "aura-2-mars-en", "aura-2-melia-it", "aura-2-minerva-en", "aura-2-neptune-en",
+    "aura-2-nestor-es", "aura-2-odysseus-en", "aura-2-olivia-es",
+    "aura-2-ophelia-en", "aura-2-orion-en", "aura-2-orpheus-en",
+    "aura-2-pandora-en", "aura-2-phoebe-en", "aura-2-pluto-en", "aura-2-rhea-nl",
+    "aura-2-roman-nl", "aura-2-sander-nl", "aura-2-saturn-en", "aura-2-selena-es",
+    "aura-2-selene-en", "aura-2-silvia-es", "aura-2-sirio-es", "aura-2-theia-en",
+    "aura-2-uzume-ja", "aura-2-valerio-es", "aura-2-vesta-en", "aura-2-viktoria-de",
+    "aura-2-zeus-en",
+]
+
+# MiniMax Speech 2.8 (HD + Turbo) — English presets of a multilingual model.
+_MINIMAX_VOICES = [
+    "English_expressive_narrator", "English_radiant_girl",
+    "English_magnetic_voiced_man", "English_compelling_lady1",
+    "English_Aussie_Bloke", "English_captivating_female1", "English_Upbeat_Woman",
+    "English_Trustworth_Man", "English_CalmWoman", "English_UpsetGirl",
+    "English_Gentle-voiced_man", "English_Whispering_girl", "English_Diligent_Man",
+    "English_Graceful_Lady", "English_ReservedYoungMan", "English_PlayfulGirl",
+    "English_ManWithDeepVoice", "English_MaturePartner", "English_FriendlyPerson",
+    "English_MatureBoss", "English_Debator", "English_LovelyGirl",
+    "English_Steadymentor", "English_Deep-VoicedGentleman", "English_Wiselady",
+    "English_CaptivatingStoryteller", "English_DecentYoungMan",
+    "English_SentimentalLady", "English_ImposingManner", "English_SadTeen",
+    "English_PassionateWarrior", "English_WiseScholar", "English_Soft-spokenGirl",
+    "English_SereneWoman", "English_ConfidentWoman", "English_PatientMan",
+    "English_Comedian", "English_BossyLeader", "English_Strong-WilledBoy",
+    "English_StressedLady", "English_AssertiveQueen", "English_AnimeCharacter",
+    "English_Jovialman", "English_WhimsicalGirl", "English_Kind-heartedGirl",
 ]
 
 # Kokoro-82m — 54 fixed preset voices. Voice id = [lang][gender]_[name]; the first
@@ -131,14 +219,36 @@ def _kokoro_voice(vid: str) -> Voice:
     return Voice(id=vid, name=vid, language=lang)
 
 
+def _deepgram_voice(vid: str) -> Voice:
+    name = vid.split("-")[-2].capitalize()  # "aura-2-agathe-fr" → "Agathe"
+    return Voice(id=vid, name=name, language=vid.rsplit("-", 1)[1])
+
+
 def _build_voices_by_model() -> dict[str, list[Voice]]:
     out: dict[str, list[Voice]] = {}
-    out["google/gemini-3.1-flash-tts-preview"] = [
-        Voice(id=v, name=v, multilingual=True) for v in _GEMINI_VOICES
+    for m in _PCM_ONLY_MODELS:  # every Gemini TTS model shares the same 30 voices
+        out[m] = [Voice(id=v, name=v, multilingual=True) for v in _GEMINI_VOICES]
+    for m in ("microsoft/mai-voice-2", "microsoft/mai-voice-2-flash"):
+        out[m] = [
+            Voice(id=v, name=v.split(":")[0].rsplit("-", 1)[1], language=v[:2], multilingual=True)
+            for v in _MAI_VOICES
+        ]
+    out["x-ai/grok-voice-tts-1.0"] = [
+        Voice(id=v, name=v.capitalize(), multilingual=True) for v in _GROK_VOICES
     ]
-    out["openai/gpt-4o-mini-tts-2025-12-15"] = [
-        Voice(id=v, name=v, multilingual=True) for v in _GPT4O_MINI_VOICES
-    ]
+    for m in ("minimax/speech-2.8-hd", "minimax/speech-2.8-turbo"):
+        out[m] = [
+            Voice(
+                id=v, name=v.removeprefix("English_").replace("_", " "),
+                language="en", multilingual=True,
+            )
+            for v in _MINIMAX_VOICES
+        ]
+    out["deepgram/aura-2"] = [_deepgram_voice(v) for v in _DEEPGRAM_AURA2_VOICES]
+    out["deepgram/flux-tts:free"] = [_deepgram_voice(v) for v in _DEEPGRAM_FLUX_VOICES]
+    for m, ids in _QWEN_VOICES.items():
+        out[m] = [Voice(id=v, name=v, multilingual=True) for v in ids]
+    out["sesame/csm-1b"] = [Voice(id=v, name=v, language="en") for v in _SESAME_VOICES]
     out["mistralai/voxtral-mini-tts-2603"] = [
         Voice(id=vid, name=name, language=lang, multilingual=True)
         for vid, name, lang in _VOXTRAL_VOICES
@@ -147,10 +257,10 @@ def _build_voices_by_model() -> dict[str, list[Voice]]:
     out["canopylabs/orpheus-3b-0.1-ft"] = [
         Voice(id=v, name=v.capitalize(), language="en") for v in _ORPHEUS_VOICES
     ]
-    zonos = [Voice(id=vid, name=name, language=lang) for vid, name, lang in _ZONOS_VOICES]
-    out["zyphra/zonos-v0.1-transformer"] = list(zonos)
-    out["zyphra/zonos-v0.1-hybrid"] = list(zonos)
-    # sesame/csm-1b: no named voices (cloning / speaker-id only) → absent on purpose.
+    # No named voices: "voice" is optional there, so expose a single "Default" entry
+    # (empty id → omitted from the request) instead of hiding the model.
+    for m in _DEFAULT_VOICE_MODELS:
+        out[m] = [Voice(id="", name="Default", multilingual=True)]
     return out
 
 
@@ -187,8 +297,7 @@ class OpenRouterProvider(TTSProvider):
         return list(_MODELS)
 
     async def list_voices(self, model: str) -> list[Voice]:
-        # Fixed per-model catalogue; models without named voices return [] so the
-        # UI exposes a free-voice input (cloning / speaker-id models).
+        # Fixed per-model catalogue.
         return list(_VOICES_BY_MODEL.get(model, []))
 
     async def synthesize(
@@ -198,9 +307,10 @@ class OpenRouterProvider(TTSProvider):
         body = {
             "model": model,
             "input": text,
-            "voice": voice_id,
             "response_format": response_format,
         }
+        if voice_id:  # empty = model's default voice (Fish Audio, Seed Audio)
+            body["voice"] = voice_id
         async with httpx.AsyncClient(timeout=TIMEOUT) as client:
             r = await client.post(
                 URL,

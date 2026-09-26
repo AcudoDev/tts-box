@@ -41,6 +41,14 @@ def test_list_models_includes_gemini_and_sesame(provider):
 
 def test_pcm_only_set_contains_gemini():
     assert "google/gemini-3.1-flash-tts-preview" in _PCM_ONLY_MODELS
+    assert "google/gemini-3.8-flash-tts" in _PCM_ONLY_MODELS
+
+
+def test_dropped_models_are_gone(provider):
+    # Removed from OpenRouter (404 / no endpoints) as of 2026-09-26.
+    models = provider.list_models()
+    assert "openai/gpt-4o-mini-tts-2025-12-15" not in models
+    assert not any(m.startswith("zyphra/") for m in models)
 
 
 @respx.mock
@@ -107,15 +115,6 @@ async def test_list_voices_gemini_has_30_multilingual(provider):
     assert any(v.id == "Kore" for v in voices)
 
 
-async def test_list_voices_gpt4o_mini_has_13(provider):
-    # Verified 2026-05-30 against OpenAI's current catalogue: 13 voices
-    # (the older 11 + the two newest, marin and cedar). All multilingual.
-    voices = await provider.list_voices("openai/gpt-4o-mini-tts-2025-12-15")
-    assert {v.id for v in voices} >= {"alloy", "onyx", "shimmer", "marin", "cedar"}
-    assert len(voices) == 13
-    assert all(v.multilingual for v in voices)
-
-
 async def test_list_voices_voxtral_has_french_marie(provider):
     # Verified preset ids from Mistral's official hosted demo (gb_/en_/fr_ scheme).
     voices = await provider.list_voices("mistralai/voxtral-mini-tts-2603")
@@ -146,17 +145,33 @@ async def test_list_voices_orpheus_has_7_english(provider):
     assert all(v.language == "en" and not v.multilingual for v in voices)
 
 
-async def test_list_voices_zonos_has_named_accent_voices(provider):
-    # Verified: OpenRouter exposes 5 fixed named voices for both Zonos variants.
-    voices = await provider.list_voices("zyphra/zonos-v0.1-transformer")
-    assert {v.id for v in voices} == {
-        "american_female", "american_male", "british_female", "british_male", "random",
-    }
+async def test_every_model_has_at_least_one_voice(provider):
+    # The catalogue hides models without voices, so each model must expose ≥ 1.
+    for m in provider.list_models():
+        assert await provider.list_voices(m), m
 
 
-async def test_list_voices_cloning_model_is_empty(provider):
-    # sesame/csm-1b has no named voices (speaker-id / cloning only) → UI free-voice mode.
-    assert await provider.list_voices("sesame/csm-1b") == []
+async def test_list_voices_deepgram_language_from_suffix(provider):
+    voices = await provider.list_voices("deepgram/aura-2")
+    agathe = next(v for v in voices if v.id == "aura-2-agathe-fr")
+    assert (agathe.name, agathe.language) == ("Agathe", "fr")
+
+
+async def test_list_voices_mai_language_from_locale(provider):
+    voices = await provider.list_voices("microsoft/mai-voice-2")
+    soleil = next(v for v in voices if v.id == "fr-FR-Soleil:MAI-Voice-2")
+    assert (soleil.name, soleil.language) == ("Soleil", "fr")
+
+
+@respx.mock
+async def test_default_voice_is_omitted_from_request(provider):
+    # Fish Audio has no named voices → single "Default" voice with empty id.
+    assert [v.id for v in await provider.list_voices("fish-audio/s2.1-pro")] == [""]
+    route = respx.post("https://openrouter.ai/api/v1/audio/speech").mock(
+        return_value=httpx.Response(200, content=b"MP3", headers={"content-type": "audio/mpeg"})
+    )
+    await provider.synthesize("hi", "fish-audio/s2.1-pro", "")
+    assert "voice" not in json.loads(route.calls.last.request.content)
 
 
 def test_provider_voices_depend_on_model(provider):

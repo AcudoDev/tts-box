@@ -33,8 +33,8 @@ def test_list_models(provider):
     models = provider.list_models()
     assert "tts-1" in models
     assert "tts-1-hd" in models
-    # gpt-4o-mini-tts is reached via OpenRouter instead.
-    assert "gpt-4o-mini-tts" not in models
+    # OpenRouter dropped gpt-4o-mini-tts, so it is served directly again.
+    assert "gpt-4o-mini-tts" in models
 
 
 async def test_list_voices_returns_static(provider):
@@ -46,8 +46,15 @@ async def test_list_voices_returns_static(provider):
 async def test_list_voices_are_multilingual():
     from app.providers.openai import OpenAIProvider
     voices = await OpenAIProvider(api_key="k").list_voices("tts-1")
-    assert len(voices) == 11
+    assert len(voices) == 9
     assert all(v.multilingual for v in voices)
+
+
+async def test_list_voices_gpt4o_mini_has_13(provider):
+    # tts-1 voices + ballad, verse, marin, cedar (gpt-4o-mini-tts only).
+    voices = await provider.list_voices("gpt-4o-mini-tts")
+    assert len(voices) == 13
+    assert {"marin", "cedar", "ballad"} <= {v.id for v in voices}
 
 
 @respx.mock
