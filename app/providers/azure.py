@@ -90,7 +90,6 @@ class AzureSpeechProvider(TTSProvider):
                 name=v.get("DisplayName", short),
                 language=(v.get("Locale") or "")[:2] or None,
                 gender=(v.get("Gender") or "").lower() or None,
-                multilingual=(model == "neural-multilingual"),
             ))
         return out
 

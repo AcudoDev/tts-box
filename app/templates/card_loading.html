@@ -1,11 +1,11 @@
-<div class="card loading"
+<div class="card loading" data-provider="{{ option.provider }}"
      id="card-{{ option.id }}"
      aria-busy="true"
      hx-get="/result/{{ session_id }}/{{ option.id }}"
      hx-trigger="load delay:500ms"
      hx-swap="outerHTML">
   <div class="card-header">
-    <span class="card-voice">{{ option.label }}</span>
+    <span class="card-voice"><span class="provider-dot" aria-hidden="true"></span>{{ option.label }}</span>
     <span class="card-meta">{{ option.provider }} · {{ option.model }}{% if option.language %} · {{ option.language }}{% endif %}</span>
   </div>
   <div class="card-body">

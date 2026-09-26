@@ -40,7 +40,6 @@ class ElevenLabsProvider(TTSProvider):
                 name=v["name"],
                 language=labels.get("language"),
                 gender=labels.get("gender"),
-                multilingual=True,
             ))
         return out
 

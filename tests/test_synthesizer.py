@@ -70,3 +70,27 @@ async def test_new_session_purges_old():
 def test_get_unknown_returns_none():
     synth = Synthesizer()
     assert synth.get("nope", "nope") is None
+
+
+async def test_retry_reruns_failed_option():
+    synth = Synthesizer()
+    provider = FakeProvider(fail=True)
+    sid = synth.start_session("hi", [(_sel("o1"), provider)])
+    await synth.wait_all(sid)
+    assert synth.get(sid, "o1").status == "error"
+    provider._fail = False
+    assert synth.retry(sid, "o1") is not None
+    assert synth.get(sid, "o1").status == "pending"
+    await synth.wait_all(sid)
+    assert synth.get(sid, "o1").status == "done"
+    assert synth.retry(sid, "ghost") is None
+
+
+def test_format_error_non_dict_json_body():
+    # A JSON list body used to raise inside the except handler, leaving the card pending forever.
+    import httpx
+
+    from app.synthesizer import _format_error
+    req = httpx.Request("POST", "https://x")
+    err = httpx.HTTPStatusError("x", request=req, response=httpx.Response(400, json=["bad"], request=req))
+    assert _format_error(err) == "HTTP 400: ['bad']"

@@ -25,8 +25,3 @@ def load_providers() -> dict[str, TTSProvider]:
         if key:
             result[name] = cls(api_key=key)
     return result
-
-
-def known_provider_names() -> list[str]:
-    _discover()
-    return sorted(_REGISTRY.keys())

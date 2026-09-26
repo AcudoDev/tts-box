@@ -68,4 +68,3 @@ async def test_list_voices_parses(provider):
     assert voices[0].name == "Aria"
     assert voices[0].language == "en"
     assert voices[1].language is None
-    assert voices[0].multilingual is False

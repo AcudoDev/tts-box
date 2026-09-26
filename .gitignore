@@ -5,6 +5,6 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .idea/
-.claude/settings.local.json
+.claude/
 .playwright-mcp/
 docs/superpowers/

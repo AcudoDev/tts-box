@@ -68,7 +68,6 @@ async def test_list_voices_standard_excludes_hd_and_multilingual(az):
     assert "fr-FR-VivienneMultilingualNeural" not in ids
     denise = next(v for v in voices if v.id == "fr-FR-DeniseNeural")
     assert denise.language == "fr"
-    assert denise.multilingual is False
 
 
 @respx.mock
@@ -81,13 +80,12 @@ async def test_list_voices_hd_only(az):
 
 
 @respx.mock
-async def test_list_voices_multilingual_flag(az):
+async def test_list_voices_multilingual_only(az):
     respx.get("https://westeurope.tts.speech.microsoft.com/cognitiveservices/voices/list").mock(
         return_value=httpx.Response(200, json=_VOICE_LIST)
     )
     voices = await az.list_voices("neural-multilingual")
     assert {v.id for v in voices} == {"fr-FR-VivienneMultilingualNeural"}
-    assert voices[0].multilingual is True
 
 
 @respx.mock

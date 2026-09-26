@@ -108,10 +108,10 @@ async def test_synthesize_http_error(provider):
         await provider.synthesize("x", "sesame/csm-1b", "nova")
 
 
-async def test_list_voices_gemini_has_30_multilingual(provider):
+async def test_list_voices_gemini_has_30_generalist(provider):
     voices = await provider.list_voices("google/gemini-3.1-flash-tts-preview")
     assert len(voices) == 30
-    assert all(v.multilingual for v in voices)
+    assert all(v.language is None for v in voices)
     assert any(v.id == "Kore" for v in voices)
 
 
@@ -123,7 +123,6 @@ async def test_list_voices_voxtral_has_french_marie(provider):
     assert "en_paul_neutral" in ids
     marie = next(v for v in voices if v.id == "fr_marie_neutral")
     assert marie.language == "fr"
-    assert marie.multilingual is True
 
 
 async def test_list_voices_kokoro_derives_language_from_prefix(provider):
@@ -131,7 +130,6 @@ async def test_list_voices_kokoro_derives_language_from_prefix(provider):
     assert len(voices) == 54  # Verified full Kokoro preset catalogue
     siwis = next(v for v in voices if v.id == "ff_siwis")
     assert siwis.language == "fr"
-    assert siwis.multilingual is False
     # Prefix → language: 'a'/'b' English, 'j' Japanese, 'z' Mandarin.
     assert next(v for v in voices if v.id == "af_heart").language == "en"
     assert next(v for v in voices if v.id == "jf_alpha").language == "ja"
@@ -142,7 +140,7 @@ async def test_list_voices_orpheus_has_7_english(provider):
     # Verified against OpenRouter's live supported_voices (7, English-only).
     voices = await provider.list_voices("canopylabs/orpheus-3b-0.1-ft")
     assert {v.id for v in voices} == {"tara", "leah", "jess", "leo", "dan", "mia", "zac"}
-    assert all(v.language == "en" and not v.multilingual for v in voices)
+    assert all(v.language == "en" for v in voices)
 
 
 async def test_every_model_has_at_least_one_voice(provider):
