@@ -13,7 +13,7 @@ from fastapi.templating import Jinja2Templates
 from app import voice_catalog
 from app.registry import load_providers
 from app.synthesizer import Synthesizer
-from app.voice_catalog import Selection, option_id, parse_token
+from app.voice_catalog import Selection, option_id
 
 load_dotenv()
 
@@ -25,12 +25,6 @@ templates = Jinja2Templates(directory=ROOT / "templates")
 templates.env.filters["flag_country"] = voice_catalog.flag_country
 # Cache-buster: a stale cached stylesheet would pair old CSS with new markup.
 templates.env.globals["css_version"] = int((ROOT / "static" / "style.css").stat().st_mtime)
-
-
-@app.get("/favicon.ico", include_in_schema=False)
-async def favicon() -> Response:
-    # Browsers auto-request /favicon.ico; return 204 so it isn't a noisy 404.
-    return Response(status_code=204)
 
 
 PROVIDERS = load_providers()
@@ -83,10 +77,6 @@ SAMPLE_TEXT: dict[str, str] = {
 }
 
 
-def _sample_text(lang: str) -> str:
-    return SAMPLE_TEXT.get(lang, SAMPLE_TEXT["en"])
-
-
 # Provider display labels. Accent colors live in style.css as --p-* tokens keyed
 # on [data-provider] (see "Provider accent tokens").
 PROVIDER_LABELS = {
@@ -129,7 +119,7 @@ async def _voices_context(lang: str, *, refresh: bool = False) -> dict:
     languages = voice_catalog.available_languages(fetched)
     return {
         "groups": groups,
-        "languages": [(code, voice_catalog.LANGUAGE_NAMES.get(code, code.upper())) for code in languages],
+        "languages": [(code, voice_catalog.language_name(code)) for code in languages],
         "current_lang": lang,
         "provider_labels": PROVIDER_LABELS,
     }
@@ -139,7 +129,7 @@ async def _voices_context(lang: str, *, refresh: bool = False) -> dict:
 async def index(request: Request):
     ctx = await _voices_context(DEFAULT_LANG)
     ctx["request"] = request
-    ctx["sample_text"] = _sample_text(DEFAULT_LANG)
+    ctx["sample_text"] = SAMPLE_TEXT[DEFAULT_LANG]
     ctx["sample_texts"] = SAMPLE_TEXT  # passed as-is; template uses | tojson
     return templates.TemplateResponse(request, "index.html", ctx)
 
@@ -165,7 +155,7 @@ async def generate(
     seen: set[str] = set()
     for token in selected:
         try:
-            provider_name, model, voice = parse_token(token)
+            provider_name, model, voice = token.split("|", 2)
         except ValueError:
             continue
         provider = PROVIDERS.get(provider_name)

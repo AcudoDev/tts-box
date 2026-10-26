@@ -1,15 +1,14 @@
 import pytest
 
+from app import voice_catalog
 from app.providers.base import TTSProvider, Voice
 from app.voice_catalog import (
-    LANGUAGE_NAMES,
     available_languages,
-    clear_cache,
     fetch_all,
     flag_country,
     groups_for_language,
+    language_name,
     option_id,
-    parse_token,
     resolve_voice,
     voice_matches_language,
 )
@@ -24,17 +23,6 @@ def test_option_id_is_deterministic():
 
 def test_option_id_differs_by_input():
     assert option_id("a", "m", "v1") != option_id("a", "m", "v2")
-
-
-def test_parse_token_roundtrip():
-    assert parse_token("openrouter|google/gemini-3.1-flash-tts-preview|Kore") == (
-        "openrouter", "google/gemini-3.1-flash-tts-preview", "Kore"
-    )
-
-
-def test_parse_token_rejects_malformed():
-    with pytest.raises(ValueError):
-        parse_token("only-one-part")
 
 
 def test_voice_matches_language_localized():
@@ -91,9 +79,9 @@ class _Boom(TTSProvider):
 
 @pytest.fixture(autouse=True)
 def _clear():
-    clear_cache()
+    voice_catalog._cache.clear()
     yield
-    clear_cache()
+    voice_catalog._cache.clear()
 
 
 async def test_fetch_all_returns_nested_structure():
@@ -182,13 +170,13 @@ def test_flag_country_codes():
 
 
 def test_language_names_are_english_and_comprehensive():
-    assert LANGUAGE_NAMES["fr"] == "French"
-    assert LANGUAGE_NAMES["de"] == "German"
+    assert language_name("fr") == "French"
+    assert language_name("de") == "German"
+    assert language_name("zz") == "ZZ"  # unknown → raw code
     # Codes providers report but that weren't in the old 15-entry curated set
     # must now resolve to a real English name (not just the raw code).
     for code in ["af", "wu", "yu", "iu", "nb", "ps", "or", "sw", "uz"]:
-        name = LANGUAGE_NAMES.get(code)
-        assert name and name != code
+        assert language_name(code) != code.upper()
 
 
 async def test_cache_hits_do_not_extend_ttl(monkeypatch):

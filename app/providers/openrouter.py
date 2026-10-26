@@ -6,7 +6,7 @@ import wave
 
 import httpx
 
-from app.providers.base import TTSProvider, Voice
+from app.providers.base import TTSProvider, Voice, mime_of
 
 URL = "https://openrouter.ai/api/v1/audio/speech"
 TIMEOUT = httpx.Timeout(60.0)
@@ -328,5 +328,4 @@ class OpenRouterProvider(TTSProvider):
             audio = _wrap_pcm_as_wav(audio, sample_rate, channels)
             return (audio, "audio/wav")
 
-        mime = content_type.split(";")[0].strip()
-        return (audio, mime or "audio/mpeg")
+        return (audio, mime_of(r))

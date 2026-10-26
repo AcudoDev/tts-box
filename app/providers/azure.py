@@ -5,7 +5,7 @@ import xml.sax.saxutils as saxutils
 
 import httpx
 
-from app.providers.base import TTSProvider, Voice
+from app.providers.base import TTSProvider, Voice, locale_from_voice_id
 
 TIMEOUT = httpx.Timeout(30.0)
 
@@ -17,14 +17,6 @@ _MODELS = ["neural-standard", "neural-hd", "neural-multilingual"]
 
 def _endpoint(region: str) -> str:
     return f"https://{region}.tts.speech.microsoft.com/cognitiveservices/v1"
-
-
-def _locale_from_voice(voice_id: str) -> str | None:
-    """Azure voiceId = '<lang>-<REGION>-<Name...>' → '<lang>-<REGION>'."""
-    parts = voice_id.split("-", 2)
-    if len(parts) >= 2 and len(parts[0]) == 2 and len(parts[1]) >= 2:
-        return f"{parts[0]}-{parts[1]}"
-    return None
 
 
 def _model_of_voice(short_name: str) -> str:
@@ -43,7 +35,7 @@ def _model_of_voice(short_name: str) -> str:
 def _build_ssml(text: str, voice_id: str, language: str | None) -> str:
     # Prefer the full locale derived from the voiceId (e.g. "fr-FR"); fall back to
     # the caller-provided language, then a neutral default.
-    lang = _locale_from_voice(voice_id) or language or "en-US"
+    lang = locale_from_voice_id(voice_id) or language or "en-US"
     # Some HD voices use a colon in their name (e.g. "fr-FR-Vivienne:DragonHDLatestNeural"),
     # which is valid as an attribute value but must be XML-escaped.
     voice_attr = saxutils.quoteattr(voice_id)

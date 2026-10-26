@@ -28,7 +28,7 @@ Pick a language, browse **every voice** your configured providers expose, tick a
 - 🎨 **Light & dark themes** — follows your OS, with a manual toggle, built on a tokenized design system.
 - 📱 **Mobile-first & responsive** — designed for a phone first; sticky filter bar and a sticky **Generate** button always within thumb's reach.
 - ♿ **Accessible** — keyboard navigation, screen-reader live regions, visible focus rings, `prefers-reduced-motion`.
-- 🧩 **One-file providers** — add a TTS provider in a single Python file; it's auto-discovered.
+- 🧩 **One-file providers** — add a TTS provider in a single Python file plus one line in the registry.
 - 🔒 **Local & private** — no accounts, no database, audio is ephemeral, your API keys never leave your `.env`.
 - 🛠️ **Zero build step** — FastAPI + HTMX + vanilla CSS. No bundler, no `npm`, no framework.
 
@@ -71,8 +71,8 @@ Put the keys for the providers you want in `.env` (copy from `.env.example`):
 ## 🧩 Add a provider
 
 1. Create `app/providers/<name>.py` with a class extending `TTSProvider` (use `app/providers/elevenlabs.py` as a template). Implement `list_models`, `list_voices`, and `synthesize`. Give each voice a `language` (ISO 639-1) when it's tied to one, or leave it `None` for a language-agnostic voice.
-2. Add its API-key env var to `.env.example`.
-3. Restart the server — the provider is auto-discovered. No other wiring needed.
+2. Add the class to `PROVIDER_CLASSES` in `app/registry.py`.
+3. Add its API-key env var to `.env.example`, then restart the server.
 
 ## 🧪 Development
 
