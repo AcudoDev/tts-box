@@ -5,27 +5,12 @@ import httpx
 import pytest
 import respx
 
-from app.providers.murf import MurfProvider, _derive_locale
+from app.providers.murf import MurfProvider
 
 
 @pytest.fixture
 def provider():
     return MurfProvider(api_key="mk-test")
-
-
-def test_derive_locale_from_voice_prefix():
-    assert _derive_locale("fr-FR-axel", None) == "fr-FR"
-    assert _derive_locale("en-US-natalie", None) == "en-US"
-
-
-def test_derive_locale_from_language_when_no_prefix():
-    assert _derive_locale("Natalie", "fr") == "fr-FR"
-    assert _derive_locale("Natalie", "en") == "en-US"
-
-
-def test_derive_locale_none_when_nothing_known():
-    assert _derive_locale("Natalie", None) is None
-    assert _derive_locale("Natalie", "xx") is None  # unknown lang
 
 
 def test_list_models(provider):
@@ -54,18 +39,27 @@ async def test_synthesize_decodes_base64_audio(provider):
     assert body["locale"] == "fr-FR"
 
 
+@pytest.mark.parametrize("voice_id,language,locale", [
+    ("Natalie", "fr", "fr-FR"),   # no prefix → language hint
+    ("Natalie", "xx", None),      # unknown language → omitted
+    ("Natalie", None, None),
+])
 @respx.mock
-async def test_synthesize_falls_back_to_audio_url(provider):
-    audio_url = "https://cdn.murf.ai/abc.mp3"
+async def test_synthesize_locale_fallback(provider, voice_id, language, locale):
+    route = respx.post("https://api.murf.ai/v1/speech/generate").mock(
+        return_value=httpx.Response(200, json={"encodedAudio": base64.b64encode(b"x").decode()})
+    )
+    await provider.synthesize("hi", "GEN2", voice_id, language=language)
+    assert json.loads(route.calls.last.request.content).get("locale") == locale
+
+
+@respx.mock
+async def test_synthesize_missing_audio_raises(provider):
     respx.post("https://api.murf.ai/v1/speech/generate").mock(
-        return_value=httpx.Response(200, json={"audioFile": audio_url})
+        return_value=httpx.Response(200, json={"audioFile": "https://cdn.murf.ai/abc.mp3"})
     )
-    respx.get(audio_url).mock(
-        return_value=httpx.Response(200, content=b"MP3FROMURL", headers={"content-type": "audio/mpeg"})
-    )
-    audio, mime = await provider.synthesize("hi", "GEN2", "en-US-natalie")
-    assert audio == b"MP3FROMURL"
-    assert mime == "audio/mpeg"
+    with pytest.raises(RuntimeError, match="encodedAudio"):
+        await provider.synthesize("hi", "GEN2", "en-US-natalie")
 
 
 @respx.mock

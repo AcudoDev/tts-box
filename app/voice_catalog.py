@@ -23,12 +23,6 @@ def option_id(provider: str, model: str, voice: str) -> str:
     return hashlib.sha1(f"{provider}|{model}|{voice}".encode()).hexdigest()[:12]
 
 
-def parse_token(token: str) -> tuple[str, str, str]:
-    """'provider|model|voice' → (provider, model, voice). Lève ValueError si malformé."""
-    provider, model, voice = token.split("|", 2)  # ValueError si < 3 parts
-    return provider, model, voice
-
-
 def voice_matches_language(voice: Voice, lang: str) -> bool:
     """A voice with a declared language appears only under that language; a voice with
     no language (OpenAI, Gemini, gpt-4o-mini…) is a generalist shown under every language.
@@ -42,10 +36,6 @@ def voice_matches_language(voice: Voice, lang: str) -> bool:
 _TTL_SECONDS = 3600.0
 # clé (provider_name, model) → (timestamp, list[Voice])
 _cache: dict[tuple[str, str], tuple[float, list[Voice]]] = {}
-
-
-def clear_cache() -> None:
-    _cache.clear()
 
 
 async def _voices_for(name: str, provider: TTSProvider, model: str, *, refresh: bool) -> list[Voice]:
@@ -125,13 +115,15 @@ _LANGUAGES: dict[str, tuple[str, str | None]] = {
     "zh": ("Chinese", "CN"), "zu": ("Zulu", "ZA"),
 }
 
-# Lookup table for display names (comprehensive — every reported code resolves).
-LANGUAGE_NAMES: dict[str, str] = {code: name for code, (name, _) in _LANGUAGES.items()}
-
 # Common languages ALWAYS offered in the selector, even if only multilingual voices
-# (which can speak them) are configured. Kept deliberately separate from LANGUAGE_NAMES:
-# the names map is a lookup table, not the "always show these" set.
+# (which can speak them) are configured. Kept deliberately separate from _LANGUAGES:
+# that map is a lookup table, not the "always show these" set.
 _CURATED = {"en", "fr", "es", "de", "it", "pt", "nl", "pl", "ru", "tr", "ar", "hi", "zh", "ja", "ko"}
+
+
+def language_name(code: str) -> str:
+    """English display name; unknown codes fall back to the upper-cased code."""
+    return _LANGUAGES.get(code, (code.upper(),))[0]
 
 
 def flag_country(language: str | None) -> str | None:

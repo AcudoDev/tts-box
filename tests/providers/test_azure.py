@@ -3,7 +3,7 @@ import pytest
 import respx
 
 from app import voice_catalog
-from app.providers.azure import AzureSpeechProvider, _build_ssml, _locale_from_voice
+from app.providers.azure import AzureSpeechProvider, _build_ssml
 
 
 @pytest.fixture
@@ -16,12 +16,6 @@ def provider(monkeypatch):
 def az(monkeypatch):
     monkeypatch.setenv("AZURE_SPEECH_REGION", "westeurope")
     return AzureSpeechProvider(api_key="az-key")
-
-
-def test_locale_from_voice_id():
-    assert _locale_from_voice("fr-FR-DeniseNeural") == "fr-FR"
-    assert _locale_from_voice("fr-FR-Vivienne:DragonHDLatestNeural") == "fr-FR"
-    assert _locale_from_voice("weird") is None
 
 
 def test_build_ssml_escapes_text():
@@ -155,12 +149,12 @@ def test_azure_declares_model_dependent_voices():
 async def test_fetch_all_preserves_azure_per_model_buckets(az):
     # Regression: with voices_depend_on_model=False, fetch_all called list_voices once
     # ("neural-standard") and reused it for all 3 buckets, dropping HD + multilingual.
-    voice_catalog.clear_cache()
+    voice_catalog._cache.clear()
     respx.get(
         "https://westeurope.tts.speech.microsoft.com/cognitiveservices/voices/list"
     ).mock(return_value=httpx.Response(200, json=_VOICE_LIST))
     fetched = await voice_catalog.fetch_all({"azure": az})
-    voice_catalog.clear_cache()
+    voice_catalog._cache.clear()
 
     std = {v.id for v in fetched["azure"]["neural-standard"]}
     hd = {v.id for v in fetched["azure"]["neural-hd"]}

@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+import httpx
+
 
 @dataclass(frozen=True)
 class Voice:
@@ -12,7 +14,17 @@ class Voice:
     gender: str | None = None
 
 
-_REGISTRY: dict[str, type[TTSProvider]] = {}
+def locale_from_voice_id(voice_id: str) -> str | None:
+    """'<lang>-<REGION>-<Name...>' (Azure, Murf) → '<lang>-<REGION>', else None."""
+    parts = voice_id.split("-", 2)
+    if len(parts) >= 2 and len(parts[0]) == 2 and len(parts[1]) >= 2:
+        return f"{parts[0]}-{parts[1]}"
+    return None
+
+
+def mime_of(r: httpx.Response) -> str:
+    """Bare mime type of a response ('audio/mpeg; x=y' → 'audio/mpeg'), mp3 by default."""
+    return r.headers.get("content-type", "").split(";")[0].strip() or "audio/mpeg"
 
 
 class TTSProvider(ABC):
@@ -22,14 +34,6 @@ class TTSProvider(ABC):
 
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
-
-    def __init_subclass__(cls, **kwargs):
-        super().__init_subclass__(**kwargs)
-        if not getattr(cls, "name", None) or not getattr(cls, "api_key_env", None):
-            raise TypeError(
-                f"{cls.__name__} must define class attrs `name` and `api_key_env`"
-            )
-        _REGISTRY[cls.name] = cls
 
     @abstractmethod
     def list_models(self) -> list[str]: ...

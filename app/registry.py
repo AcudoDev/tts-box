@@ -1,27 +1,29 @@
 from __future__ import annotations
 
-import importlib
 import os
-import pkgutil
 
-from app.providers.base import _REGISTRY, TTSProvider
+from app.providers.azure import AzureSpeechProvider
+from app.providers.base import TTSProvider
+from app.providers.cartesia import CartesiaProvider
+from app.providers.elevenlabs import ElevenLabsProvider
+from app.providers.murf import MurfProvider
+from app.providers.openai import OpenAIProvider
+from app.providers.openrouter import OpenRouterProvider
 
-
-def _discover() -> None:
-    """Import every module under app.providers to trigger __init_subclass__."""
-    pkg = importlib.import_module("app.providers")
-    for mod in pkgutil.iter_modules(pkg.__path__):
-        if mod.name.startswith("_"):
-            continue
-        importlib.import_module(f"app.providers.{mod.name}")
+PROVIDER_CLASSES: tuple[type[TTSProvider], ...] = (
+    ElevenLabsProvider,
+    OpenAIProvider,
+    CartesiaProvider,
+    MurfProvider,
+    AzureSpeechProvider,
+    OpenRouterProvider,
+)
 
 
 def load_providers() -> dict[str, TTSProvider]:
     """Instantiate providers whose API key env var is set."""
-    _discover()
-    result: dict[str, TTSProvider] = {}
-    for name, cls in _REGISTRY.items():
-        key = os.getenv(cls.api_key_env)
-        if key:
-            result[name] = cls(api_key=key)
-    return result
+    return {
+        cls.name: cls(api_key=key)
+        for cls in PROVIDER_CLASSES
+        if (key := os.getenv(cls.api_key_env))
+    }

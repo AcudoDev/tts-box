@@ -1,8 +1,6 @@
 import dataclasses
 
-import pytest
-
-from app.providers.base import _REGISTRY, TTSProvider, Voice
+from app.providers.base import TTSProvider, Voice, locale_from_voice_id
 
 
 def test_voice_minimal_fields():
@@ -28,31 +26,12 @@ def test_voice_frozen():
         pass
 
 
-def test_subclass_auto_registers():
-    class FakeProvider(TTSProvider):
-        name = "fake_test"
-        api_key_env = "FAKE_KEY"
-
-        def list_models(self):
-            return ["m1"]
-
-        async def list_voices(self, model):
-            return []
-
-        async def synthesize(self, text, model, voice_id):
-            return (b"", "audio/mpeg")
-
-    assert "fake_test" in _REGISTRY
-    assert _REGISTRY["fake_test"] is FakeProvider
-
-
-def test_subclass_must_have_name():
-    with pytest.raises(TypeError):
-        class BadProvider(TTSProvider):
-            def list_models(self): return []
-            async def list_voices(self, model): return []
-            async def synthesize(self, text, model, voice_id):
-                return (b"", "audio/mpeg")
+def test_locale_from_voice_id():
+    assert locale_from_voice_id("fr-FR-DeniseNeural") == "fr-FR"
+    assert locale_from_voice_id("fr-FR-Vivienne:DragonHDLatestNeural") == "fr-FR"
+    assert locale_from_voice_id("en-US-natalie") == "en-US"
+    assert locale_from_voice_id("Natalie") is None
+    assert locale_from_voice_id("weird") is None
 
 
 def test_provider_voices_depend_on_model_defaults_false():

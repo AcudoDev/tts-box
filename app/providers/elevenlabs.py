@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import httpx
 
-from app.providers.base import TTSProvider, Voice
+from app.providers.base import TTSProvider, Voice, mime_of
 
 BASE = "https://api.elevenlabs.io/v1"
 TIMEOUT = httpx.Timeout(30.0)
@@ -59,5 +59,4 @@ class ElevenLabsProvider(TTSProvider):
                 json=body,
             )
             r.raise_for_status()
-            mime = r.headers.get("content-type", "audio/mpeg").split(";")[0]
-            return (r.content, mime)
+            return (r.content, mime_of(r))
